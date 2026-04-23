@@ -95,8 +95,9 @@ export const exportInscriptions = async (
     excludeWorkshops?: boolean
 ): Promise<void> => {
     const token = localStorage.getItem('token');
+    const API_URL = import.meta.env.VITE_API_URL || '';
     const downloadClient = axios.create({
-        baseURL: `${import.meta.env.VITE_API_URL}/api`,
+        baseURL: `${API_URL}/api`,
     });
 
     try {

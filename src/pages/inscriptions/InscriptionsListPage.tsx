@@ -14,9 +14,9 @@ import Pagination from '@/components/shared/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { InscriptionsCount } from '@/services/types';
 import type { Inscription } from './components/types';
-import type { StatCardProps, SortConfig } from './types';
+import type { SortConfig } from './types';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
-import { StatCard, TotalIcon, PaidIcon, PendingIcon, ResultsIcon, SearchIcon } from '@/components/shared/AdminStatComponents';
+import { StatCard, TotalIcon, PaidIcon, PendingIcon, SearchIcon } from '@/components/shared/AdminStatComponents';
 
 const InscriptionsAdminPage: React.FC = () => {
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);

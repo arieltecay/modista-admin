@@ -5,8 +5,10 @@
 
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig, AxiosError } from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 export const apiClient: AxiosInstance = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}/api`,
+    baseURL: `${API_URL}/api`,
     headers: {
         'Content-Type': 'application/json',
     },

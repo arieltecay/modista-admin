@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { apiClient } from '../config/apiClient';
 import { WorkshopDetailsResponse, WorkshopInscriptionData } from './types';
 import { PaginatedResponse } from '../types';
@@ -20,3 +21,52 @@ export const getAvailableTurnosForInscription = async (inscriptionId: string): P
 
 export const deleteWorkshopInscription = async (inscriptionId: string): Promise<void> =>
   apiClient.delete(`/workshop-inscriptions/workshop/${inscriptionId}`);
+
+export const exportWorkshopInscriptions = async (
+  workshopId: string,
+  paymentStatusFilter: 'all' | 'paid' | 'pending' | 'partial' = 'all',
+  search?: string,
+  turnoFilter?: string
+): Promise<void> => {
+  const token = localStorage.getItem('token');
+  const API_URL = import.meta.env.VITE_API_URL || '';
+  const downloadClient = axios.create({
+    baseURL: `${API_URL}/api`,
+  });
+
+  try {
+    const response = await downloadClient.get(`/workshop-inscriptions/${workshopId}/export`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: { paymentStatusFilter, search, turnoFilter },
+      responseType: 'blob',
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = `taller_${workshopId}.xlsx`;
+
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+      if (filenameMatch && filenameMatch.length > 1) {
+        filename = filenameMatch[1];
+      }
+    }
+
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+
+    if (link.parentNode) {
+      link.parentNode.removeChild(link);
+    }
+    window.URL.revokeObjectURL(url);
+
+  } catch (error: any) {
+    throw new Error('No se pudo descargar el archivo.');
+  }
+};

@@ -5,7 +5,7 @@ import { getCourseById } from '@/services/courses/coursesService';
 import toast from 'react-hot-toast';
 import Spinner from '@/components/shared/Spinner';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
-import type { WorkshopCourse, Turno, NewTurno } from '../types';
+import type { WorkshopCourse, Turno, NewTurno } from './types';
 
 const WorkshopSchedulePage: FC = () => {
   const { id } = useParams<{ id: string }>();

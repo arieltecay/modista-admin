@@ -33,9 +33,10 @@ export interface WorkshopInscription {
   apellido: string;
   email: string;
   celular: string;
-  paymentStatus: 'paid' | 'pending';
+  paymentStatus: 'paid' | 'pending' | 'partial';
   coursePrice: number;
   depositAmount: number;
+  totalPaid?: number;
   depositDate?: string;
   isReserved: boolean;
   fechaInscripcion: string;

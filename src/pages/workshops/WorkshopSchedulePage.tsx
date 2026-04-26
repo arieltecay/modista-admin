@@ -6,12 +6,12 @@ import toast from 'react-hot-toast';
 import Spinner from '@/components/shared/Spinner';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 import { 
-  LockClosedIcon, 
-  LockOpenIcon, 
-  TrashIcon, 
-  PlusIcon,
-  ChevronLeftIcon
-} from '@heroicons/react/24/outline';
+  HiLockClosed, 
+  HiLockOpen, 
+  HiTrash, 
+  HiPlus,
+  HiChevronLeft
+} from 'react-icons/hi';
 import type { WorkshopCourse, Turno, NewTurno } from './types';
 
 const WorkshopSchedulePage: FC = () => {
@@ -19,32 +19,45 @@ const WorkshopSchedulePage: FC = () => {
   const navigate = useNavigate();
   const [course, setCourse] = useState<WorkshopCourse | null>(null);
   const [turnos, setTurnos] = useState<Turno[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
-  const [newTurno, setNewTurno] = useState<NewTurno>({ 
-    diaSemana: 'Lunes', 
-    horaInicio: '09:00', 
-    horaFin: '11:00', 
-    cupoMaximo: 4, 
-    courseId: id || '' 
+  const [loading, setLoading] = useState<boolean>(true);
+  const [isAdding, setIsAdding] = useState<boolean>(false);
+  const [newTurno, setNewTurno] = useState<NewTurno>({
+    diaSemana: 'Lunes',
+    horaInicio: '09:00',
+    horaFin: '11:00',
+    cupoMaximo: 4,
+    courseId: id || ''
   });
-  const [deleteModal, setDeleteModal] = useState({ isOpen: false, turnoId: '', turnoLabel: '' });
+
+  const [deleteModal, setDeleteModal] = useState({ 
+    isOpen: false, 
+    turnoId: '', 
+    turnoLabel: '' 
+  });
   const [isDeleting, setIsDeleting] = useState(false);
+
   const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!id) return;
       try {
         setLoading(true);
+        if (!id) return;
+
         const foundCourse: any = await getCourseById(id);
         setCourse(foundCourse);
+
         const response = await getTurnosByCourse(id, { includeBlocked: true });
-        setTurnos(response.data || []);
-      } catch (e) { 
-        toast.error('Error al cargar agenda'); 
-      } finally { 
-        setLoading(false); 
+        const turnosData = Array.isArray(response) ? response : (response?.data || []);
+        setTurnos(turnosData);
+
+        if (foundCourse) {
+          setNewTurno(prev => ({ ...prev, courseId: foundCourse._id || foundCourse.uuid || id }));
+        }
+      } catch (err: any) {
+        toast.error('Error al cargar la agenda');
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -53,12 +66,12 @@ const WorkshopSchedulePage: FC = () => {
   const handleAddTurno = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      const res = await createTurno({ ...newTurno, courseId: id });
-      setTurnos([...turnos, res.data]);
+      const response: { data: Turno } = await createTurno(newTurno);
+      setTurnos([...turnos, response.data]);
       setIsAdding(false);
       toast.success('Horario agregado con éxito');
-    } catch { 
-      toast.error('Error al agregar horario'); 
+    } catch {
+      toast.error('Error al agregar horario');
     }
   };
 
@@ -97,151 +110,147 @@ const WorkshopSchedulePage: FC = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Spinner /></div>;
 
   return (
-    <div className="bg-gray-50 min-h-screen p-4 md:p-6">
+    <div className="bg-gray-50/30 min-h-screen p-4 md:p-10">
       <div className="max-w-5xl mx-auto">
-        {/* Breadcrumb - Tamaño más compacto */}
         <button
           onClick={() => navigate(`/admin/workshops/${id}`)}
-          className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 mb-4 transition-colors group"
+          className="flex items-center gap-2 text-gray-400 hover:text-indigo-600 mb-6 transition-colors group font-medium"
         >
-          <ChevronLeftIcon className="w-4 h-4" />
-          <span className="text-base font-medium">Volver</span>
+          <HiChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-lg">Volver al Taller</span>
         </button>
 
-        {/* Header - Tamaños reducidos */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight leading-tight">
               Agenda: {course?.title} ✂️
             </h1>
-            <p className="text-gray-400 text-sm mt-0.5 font-medium">Administra horarios y cupos disponibles.</p>
+            <p className="text-gray-500 text-lg mt-1 font-medium">Administra los horarios y cupos disponibles.</p>
           </div>
           <button
             onClick={() => setIsAdding(!isAdding)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95 ${
+            className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all shadow-xl active:scale-95 ${
               isAdding 
                 ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
-                : 'bg-[#00a76f] text-white hover:bg-[#008f5d]'
+                : 'bg-[#00a76f] text-white hover:bg-[#008f5d] shadow-[#00a76f]/20'
             }`}
           >
-            {isAdding ? 'Cancelar' : <><PlusIcon className="w-4 h-4 stroke-[3px]" /> Agregar Turno</>}
+            {isAdding ? 'Cancelar' : <><HiPlus className="w-6 h-6" /> Agregar Turno</>}
           </button>
         </div>
 
-        {/* Formulario de Adición - Más compacto */}
         {isAdding && (
-          <form onSubmit={handleAddTurno} className="bg-white p-6 rounded-3xl shadow-lg border border-emerald-50 mb-8 animate-in slide-in-from-top-2 duration-300">
-            <h2 className="text-lg font-bold text-gray-800 mb-6">Configurar Horario</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Día</label>
+          <form onSubmit={handleAddTurno} className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-emerald-50 mb-12 animate-in slide-in-from-top-4 duration-300">
+            <h2 className="text-2xl font-black text-gray-900 mb-8 tracking-tight">Configurar Nuevo Horario</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Día</label>
                 <select
-                  className="w-full p-3 bg-gray-50 border-2 border-transparent focus:border-emerald-500 focus:bg-white rounded-xl outline-none transition-all font-bold text-sm text-gray-700"
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl outline-none transition-all font-bold text-gray-700"
                   value={newTurno.diaSemana}
                   onChange={e => setNewTurno({ ...newTurno, diaSemana: e.target.value })}
                 >
                   {dias.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Inicio</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Hora Inicio</label>
                 <input
                   type="time"
-                  className="w-full p-3 bg-gray-50 border-2 border-transparent focus:border-emerald-500 focus:bg-white rounded-xl outline-none transition-all font-bold text-sm"
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl outline-none transition-all font-bold text-gray-700"
                   value={newTurno.horaInicio}
                   onChange={e => setNewTurno({ ...newTurno, horaInicio: e.target.value })}
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Fin</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Hora Fin</label>
                 <input
                   type="time"
-                  className="w-full p-3 bg-gray-50 border-2 border-transparent focus:border-emerald-500 focus:bg-white rounded-xl outline-none transition-all font-bold text-sm"
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl outline-none transition-all font-bold text-gray-700"
                   value={newTurno.horaFin}
                   onChange={e => setNewTurno({ ...newTurno, horaFin: e.target.value })}
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Cupos</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Cupos</label>
                 <input
                   type="number"
                   min="1"
-                  className="w-full p-3 bg-gray-50 border-2 border-transparent focus:border-emerald-500 focus:bg-white rounded-xl outline-none transition-all font-bold text-sm"
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl outline-none transition-all font-bold text-gray-700"
                   value={newTurno.cupoMaximo}
                   onChange={e => setNewTurno({ ...newTurno, cupoMaximo: parseInt(e.target.value) })}
                 />
               </div>
             </div>
-            <div className="mt-8 flex justify-end">
-              <button type="submit" className="px-8 py-2.5 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-black transition-all shadow-md active:scale-95">
-                Guardar
+            <div className="mt-10 flex justify-end">
+              <button type="submit" className="px-12 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all shadow-xl active:scale-95">
+                Guardar Horario
               </button>
             </div>
           </form>
         )}
 
-        {/* Lista de Turnos - Diseño refinado y compacto */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {(!turnos || turnos.length === 0) && !isAdding && (
-            <div className="bg-white p-12 text-center rounded-[2rem] border-2 border-dashed border-gray-200">
-              <p className="text-gray-400 font-bold">No hay horarios configurados.</p>
+            <div className="bg-white p-20 text-center rounded-[3rem] border-2 border-dashed border-gray-200">
+              <p className="text-gray-400 font-bold text-xl">No hay horarios configurados.</p>
             </div>
           )}
 
           {Array.isArray(turnos) && [...turnos].sort((a, b) => dias.indexOf(a.diaSemana) - dias.indexOf(b.diaSemana)).map(turno => (
             <div
               key={turno._id}
-              className={`bg-white p-4 rounded-[1.5rem] shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 transition-all duration-300 ${
-                turno.isBlocked ? 'opacity-50' : 'hover:shadow-md'
+              className={`bg-white p-7 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-6 transition-all duration-300 ${
+                turno.isBlocked ? 'opacity-50' : 'hover:shadow-2xl hover:-translate-y-1'
               }`}
             >
-              <div className="flex items-center gap-4 w-full sm:w-auto">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 font-bold text-lg transition-colors ${
-                  turno.isBlocked ? 'bg-gray-100 text-gray-400' : 'bg-gray-50 text-indigo-600'
+              <div className="flex items-center gap-8 w-full sm:w-auto">
+                <div className={`w-20 h-20 rounded-[1.75rem] flex items-center justify-center flex-shrink-0 font-black text-2xl transition-colors ${
+                  turno.isBlocked ? 'bg-gray-100 text-gray-400' : 'bg-indigo-50 text-indigo-600 shadow-inner'
                 }`}>
                   {turno.diaSemana.substring(0, 2)}
                 </div>
                 
-                <div>
-                  <h3 className="text-lg font-bold text-gray-800 tracking-tight">{turno.diaSemana}</h3>
-                  <p className="text-gray-400 text-sm font-semibold tracking-tight">{turno.horaInicio} - {turno.horaFin} hs</p>
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">{turno.diaSemana}</h3>
+                  <p className="text-gray-400 text-lg font-bold tracking-tight">{turno.horaInicio} - {turno.horaFin} hs</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-8 w-full sm:w-auto">
-                <div className="text-right min-w-[70px]">
-                  <p className="text-[10px] text-gray-300 uppercase font-black tracking-widest mb-0.5">Cupos</p>
-                  <p className="text-xl font-black text-gray-900 tracking-tighter">
+              <div className="flex items-center justify-between sm:justify-end gap-12 w-full sm:w-auto">
+                <div className="text-right min-w-[100px]">
+                  <p className="text-[10px] text-gray-300 uppercase font-black tracking-[0.2em] mb-1">Cupos</p>
+                  <p className="text-3xl font-black text-gray-900 tracking-tighter">
                     <span className={turno.cuposInscriptos >= turno.cupoMaximo ? 'text-red-500' : 'text-emerald-500'}>
                       {turno.cuposInscriptos}
                     </span>
-                    <span className="text-gray-200 mx-1">/</span>
+                    <span className="text-gray-200 mx-2">/</span>
                     <span className="text-gray-300">{turno.cupoMaximo}</span>
                   </p>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <button
                     onClick={() => handleToggleBlock(turno)}
-                    className={`p-3 rounded-xl transition-all border ${
+                    className={`p-4 rounded-2xl transition-all border-2 shadow-sm ${
                       turno.isBlocked 
                         ? 'bg-gray-100 border-transparent text-gray-400 hover:bg-gray-200' 
-                        : 'bg-white border-gray-50 text-gray-300 hover:text-indigo-600 hover:bg-indigo-50'
+                        : 'bg-white border-gray-50 text-gray-300 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50'
                     }`}
                     title={turno.isBlocked ? 'Habilitar' : 'Bloquear'}
                   >
                     {turno.isBlocked ? (
-                      <LockClosedIcon className="w-5 h-5 stroke-[2.5px]" />
+                      <HiLockClosed className="w-7 h-7" />
                     ) : (
-                      <LockOpenIcon className="w-5 h-5 stroke-[2.5px]" />
+                      <HiLockOpen className="w-7 h-7" />
                     )}
                   </button>
                   <button
                     onClick={() => handleDelete(turno)}
-                    className="p-3 bg-white border border-gray-50 text-gray-300 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all"
-                    title="Eliminar"
+                    className="p-4 bg-white border-2 border-gray-50 text-gray-300 rounded-2xl hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all shadow-sm"
+                    title="Eliminar Horario"
                   >
-                    <TrashIcon className="w-5 h-5 stroke-[2.5px]" />
+                    <HiTrash className="w-7 h-7" />
                   </button>
                 </div>
               </div>

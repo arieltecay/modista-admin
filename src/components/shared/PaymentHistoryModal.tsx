@@ -44,6 +44,7 @@ const PaymentHistoryModal: FC<PaymentHistoryModalProps> = ({ isOpen, onClose, in
       await addPayment(inscriptionId, { amount: num, paymentMethod, notes });
       toast.success('Pago registrado');
       setAmount(''); setPaymentMethod(''); setNotes('');
+      onClose();
       fetchHistory();
     } catch (err) { toast.error('Error al registrar'); } finally { setIsSubmitting(false); }
   };

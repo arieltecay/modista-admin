@@ -2,7 +2,7 @@ import { type FC, useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getWorkshopInscriptions, getWorkshopDetails, exportWorkshopInscriptions } from '@/services/inscriptions/workshopInscriptionService';
-import { updateInscriptionPaymentStatus, addPayment } from '@/services/inscriptions/inscriptionService';
+import { updateInscriptionPaymentStatus, updateInscriptionDeposit } from '@/services/inscriptions/inscriptionService';
 import { sendPaymentSuccessEmail } from '@/services/email/emailService';
 import { getCourseById } from '@/services/courses/coursesService';
 import { getTurnosByCourse } from '@/services/turnos/turnoService';
@@ -40,7 +40,7 @@ const WorkshopInscriptionsPage: FC = () => {
     if (!id) return;
     try {
       setLoading(true);
-      const [courseData, turnosData, inscriptionsData, detailsData]: any = await Promise.all([
+      const [courseData, turnosData, inscriptionsData, detailsData] = await Promise.all([
         getCourseById(id),
         getTurnosByCourse(id, { includeBlocked: true }),
         getWorkshopInscriptions(id, { 
@@ -55,7 +55,7 @@ const WorkshopInscriptionsPage: FC = () => {
         getWorkshopDetails(id)
       ]);
 
-      setCourse(courseData);
+      setCourse(courseData as unknown as WorkshopCourse);
       setAvailableTurnos(turnosData.data || []);
       setInscriptions(inscriptionsData.data || []);
       setTotalItems(inscriptionsData.total || 0);
@@ -74,6 +74,18 @@ const WorkshopInscriptionsPage: FC = () => {
   const handlePaymentStatusUpdate = async (insId: string, status: 'paid' | 'pending') => {
     try {
       await updateInscriptionPaymentStatus(insId, status);
+      
+      if (status === 'paid') {
+        const student = inscriptions.find(i => i._id === insId);
+        if (student) {
+          await sendPaymentSuccessEmail({
+            ...student,
+            dateYear: new Date().getFullYear(),
+            turno: student.turnoId
+          } as any);
+        }
+      }
+
       await fetchData();
       toast.success('Estado actualizado');
     } catch (e) { toast.error('Error'); }
@@ -82,12 +94,21 @@ const WorkshopInscriptionsPage: FC = () => {
   const handleDepositSubmit = async (insId: string, amount: number) => {
     try {
       setIsSubmittingDeposit(true);
-      await addPayment(insId, { amount, notes: 'Registro de seña desde panel admin' });
+      await updateInscriptionDeposit(insId, amount);
+
+      // Actualizar lista local (opcional si se hace fetchData, pero bueno para consistencia)
+      const updatedList = inscriptions.map(inv =>
+        inv._id === insId
+          ? { ...inv, depositAmount: amount, depositDate: new Date().toISOString(), isReserved: true }
+          : inv
+      );
+      setInscriptions(updatedList);
+      
       setIsDepositModalOpen(false);
       await fetchData();
-      toast.success('Pago registrado con éxito');
+      toast.success('Seña registrada y correo enviado exitosamente');
     } catch (e: any) {
-      toast.error(e.message || 'Error al registrar el pago');
+      toast.error(e.response?.data?.message || 'Error al registrar la seña');
     } finally {
       setIsSubmittingDeposit(false);
     }
@@ -150,7 +171,7 @@ const WorkshopInscriptionsPage: FC = () => {
               Ver Agenda y Horarios
             </button>
             <button 
-              onClick={handleResetFilters}
+              onClick={() => navigate(`/admin/workshops/more-info/${id}`)}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-100 transition-all active:scale-95"
             >
               <HiUsers className="w-5 h-5 opacity-90" />
@@ -249,13 +270,13 @@ const WorkshopInscriptionsPage: FC = () => {
           handlePaymentStatusUpdate={handlePaymentStatusUpdate} 
           sortConfig={sortConfig} 
           handleSort={handleSort} 
-          onDepositClick={(i: any) => { setSelectedInscription(i); setIsDepositModalOpen(true); }} 
+          onDepositClick={(i) => { setSelectedInscription(i); setIsDepositModalOpen(true); }} 
         />
         <WorkshopInscriptionsList 
           inscriptions={inscriptions} 
           loading={loading} 
           handlePaymentStatusUpdate={handlePaymentStatusUpdate} 
-          onDepositClick={(i: any) => { setSelectedInscription(i); setIsDepositModalOpen(true); }} 
+          onDepositClick={(i) => { setSelectedInscription(i); setIsDepositModalOpen(true); }} 
         />
 
         <div className="p-8 bg-gray-50/50">

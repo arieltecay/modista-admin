@@ -76,6 +76,14 @@ export const updateInscriptionPaymentStatus = (
         paymentStatus
     });
 
+export const updateInscriptionDeposit = (
+    inscriptionId: string,
+    depositAmount: number
+): Promise<Inscription> =>
+    apiClient.patch(`/inscriptions/${inscriptionId}/deposit`, {
+        depositAmount
+    });
+
 export const addPayment = (
     inscriptionId: string,
     paymentData: { amount: number; paymentMethod?: string; notes?: string }

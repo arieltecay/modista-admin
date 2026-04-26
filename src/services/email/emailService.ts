@@ -19,10 +19,10 @@ export const sendConfirmationEmail = (inscriptionData: InscriptionEmailData): Pr
 };
 
 export const sendPaymentSuccessEmail = (inscriptionData: InscriptionEmailData): Promise<{ message: string }> => {
-    const turno = (inscriptionData as any).turnoId;
+    const turno = (inscriptionData as any).turnoId || (inscriptionData as any).turno;
     let details = '';
-    if (turno) {
-        details = `${turno.diaSemana} de ${turno.horaInicio} a ${turno.horaFin} hs`;
+    if (turno && typeof turno === 'object') {
+        details = `${turno.diaSemana || ''} de ${turno.horaInicio || ''} a ${turno.horaFin || ''} hs`;
     }
 
     const emailPayload: EmailPayload = {
@@ -34,6 +34,24 @@ export const sendPaymentSuccessEmail = (inscriptionData: InscriptionEmailData): 
             courseTitle: inscriptionData.courseTitle,
             details: details,
             year: new Date().getFullYear(),
+        },
+    };
+    return apiClient.post('/email/send-email', emailPayload);
+};
+
+export const sendDepositEmail = (inscriptionData: any): Promise<{ message: string }> => {
+    const emailPayload: EmailPayload = {
+        to: inscriptionData.email,
+        subject: `Confirmación de pago: ${inscriptionData.courseTitle}`,
+        templateName: 'depositConfirmation',
+        data: {
+            name: `${inscriptionData.nombre} ${inscriptionData.apellido}`,
+            nombre: inscriptionData.nombre,
+            apellido: inscriptionData.apellido,
+            courseTitle: inscriptionData.courseTitle,
+            horario: inscriptionData.horario || 'A coordinar',
+            monto: String(inscriptionData.depositAmount || 0),
+            fecha: new Date().toLocaleDateString('es-AR')
         },
     };
     return apiClient.post('/email/send-email', emailPayload);

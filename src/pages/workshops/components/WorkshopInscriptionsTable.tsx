@@ -1,21 +1,48 @@
 import type { FC } from 'react';
 import Spinner from '@/components/shared/Spinner';
-import { HiArrowUp, HiArrowDown } from 'react-icons/hi';
+import { HiArrowUp, HiArrowDown, HiCheckCircle, HiClock, HiCurrencyDollar, HiReply } from 'react-icons/hi';
+import type { WorkshopInscription, WorkshopSortConfig, Turno } from '../types';
 
-const WorkshopInscriptionsTable = ({ inscriptions, loading, handlePaymentStatusUpdate, sortConfig, handleSort, onDepositClick }: any) => {
-  if (loading) return <div className="p-20 flex justify-center"><Spinner /></div>;
+interface WorkshopInscriptionsTableProps {
+  inscriptions: WorkshopInscription[];
+  loading: boolean;
+  handlePaymentStatusUpdate: (id: string, status: 'paid' | 'pending') => Promise<void>;
+  sortConfig: WorkshopSortConfig;
+  handleSort: (key: string) => void;
+  onDepositClick: (inv: WorkshopInscription) => void;
+}
+
+const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({ 
+  inscriptions, 
+  loading, 
+  handlePaymentStatusUpdate, 
+  sortConfig, 
+  handleSort, 
+  onDepositClick 
+}) => {
+  if (loading) return (
+    <div className="p-24 flex flex-col items-center justify-center bg-white rounded-[2rem]">
+      <Spinner />
+      <p className="mt-4 text-gray-400 font-bold animate-pulse">Actualizando lista...</p>
+    </div>
+  );
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-AR');
+    return new Date(dateString).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   const getSortIcon = (key: string) => {
     if (sortConfig.key !== key) return null;
-    return sortConfig.direction === 'asc' ? <HiArrowUp className="inline w-3 h-3" /> : <HiArrowDown className="inline w-3 h-3" />;
+    return sortConfig.direction === 'asc' ? <HiArrowUp className="inline w-3 h-3 ml-1" /> : <HiArrowDown className="inline w-3 h-3 ml-1" />;
+  };
+
+  const getTurnoInfo = (turnoId: string | Turno | undefined) => {
+    if (!turnoId || typeof turnoId === 'string') return '-';
+    return `${turnoId.diaSemana} ${turnoId.horaInicio}hs`;
   };
   
   return (
@@ -24,96 +51,111 @@ const WorkshopInscriptionsTable = ({ inscriptions, loading, handlePaymentStatusU
         <thead>
           <tr className="border-b border-gray-100">
             <th 
-              className="px-8 py-5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"
+              className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-indigo-600 transition-colors"
               onClick={() => handleSort('nombre')}
             >
               Nombre {getSortIcon('nombre')}
             </th>
-            <th className="px-8 py-5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               Contacto
             </th>
             <th 
-              className="px-8 py-5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"
+              className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-indigo-600 transition-colors"
               onClick={() => handleSort('fechaInscripcion')}
             >
               Fecha Inscr. {getSortIcon('fechaInscripcion')}
             </th>
-            <th className="px-8 py-5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               Horario
             </th>
-            <th className="px-8 py-5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               Precio
             </th>
-            <th className="px-8 py-5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               Pagado
             </th>
-            <th className="px-8 py-5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               Saldo
             </th>
-            <th className="px-8 py-5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               Estado
             </th>
-            <th className="px-8 py-5 text-right text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               Acciones
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50">
-          {inscriptions.map((inv: any) => {
+          {inscriptions.map((inv) => {
             const totalPaid = inv.totalPaid || inv.depositAmount || 0;
             const balance = Math.max(0, inv.coursePrice - totalPaid);
             
             return (
               <tr key={inv._id} className="hover:bg-gray-50/50 transition-colors group">
                 <td className="px-8 py-6 whitespace-nowrap">
-                  <div className="text-sm font-bold text-gray-800 uppercase tracking-tight">
+                  <div className="text-sm font-black text-gray-900 uppercase tracking-tight">
                     {inv.nombre} {inv.apellido}
                   </div>
                 </td>
                 <td className="px-8 py-6 whitespace-nowrap">
-                  <div className="text-[13px] text-gray-600 font-medium">{inv.email}</div>
-                  <div className="text-[11px] text-gray-400 mt-0.5">{inv.celular}</div>
+                  <div className="text-xs text-gray-600 font-bold">{inv.email}</div>
+                  <div className="text-[10px] text-gray-400 mt-1 font-medium">{inv.celular}</div>
                 </td>
-                <td className="px-8 py-6 whitespace-nowrap text-[13px] text-gray-500">
+                <td className="px-8 py-6 whitespace-nowrap text-xs font-bold text-gray-400">
                   {formatDate(inv.fechaInscripcion)}
                 </td>
                 <td className="px-8 py-6 whitespace-nowrap">
-                  <div className="text-[13px] text-gray-700 font-medium">
-                    {inv.turnoId?.diaSemana} {inv.turnoId?.horaInicio}hs
+                  <div className="text-xs text-indigo-600 font-black bg-indigo-50 px-2.5 py-1 rounded-lg inline-block border border-indigo-100/50 uppercase tracking-tighter">
+                    {getTurnoInfo(inv.turnoId)}
                   </div>
                 </td>
-                <td className="px-8 py-6 whitespace-nowrap text-[13px] font-semibold text-gray-600">
+                <td className="px-8 py-6 whitespace-nowrap text-xs font-bold text-gray-500">
                   {formatCurrency(inv.coursePrice)}
                 </td>
-                <td className="px-8 py-6 whitespace-nowrap text-[13px] font-bold text-emerald-600">
+                <td className="px-8 py-6 whitespace-nowrap text-sm font-black text-emerald-600 tracking-tighter">
                   {formatCurrency(totalPaid)}
                 </td>
-                <td className="px-8 py-6 whitespace-nowrap text-[13px] font-bold text-red-500">
+                <td className="px-8 py-6 whitespace-nowrap text-sm font-black text-red-500 tracking-tighter">
                   {balance > 0 ? formatCurrency(balance) : '-'}
                 </td>
                 <td className="px-8 py-6 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black tracking-widest border ${
                     inv.paymentStatus === 'paid' 
-                      ? 'bg-green-50 text-green-600 border border-green-100' 
+                      ? 'bg-green-50 text-green-600 border-green-100' 
                       : inv.paymentStatus === 'partial'
-                        ? 'bg-amber-50 text-amber-600 border border-amber-100'
-                        : 'bg-red-50 text-red-600 border border-red-100'
+                        ? 'bg-amber-50 text-amber-600 border-amber-100'
+                        : 'bg-red-50 text-red-600 border-red-100'
                   }`}>
                     {inv.paymentStatus === 'paid' ? 'PAGADO' : inv.paymentStatus === 'partial' ? 'PARCIAL' : 'PENDIENTE'}
                   </span>
                 </td>
                 <td className="px-8 py-6 whitespace-nowrap text-right">
-                  <div className="flex items-center justify-end gap-4">
-                    <button 
-                      onClick={() => handlePaymentStatusUpdate(inv._id, inv.paymentStatus === 'paid' ? 'pending' : 'paid')} 
-                      className="text-[13px] font-bold text-blue-600 hover:text-blue-800 hover:underline transition-all"
-                    >
-                      {inv.paymentStatus === 'paid' ? 'Revertir' : 'Pagado'}
-                    </button>
+                  <div className="flex items-center justify-end gap-2">
+                    {inv.paymentStatus === 'paid' ? (
+                      <button 
+                        onClick={() => handlePaymentStatusUpdate(inv._id, 'pending')} 
+                        className="p-2.5 text-gray-400 bg-gray-50 hover:bg-gray-200 hover:text-gray-700 rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
+                        title="Revertir a Pendiente"
+                      >
+                        <HiReply className="w-4 h-4" />
+                        Revertir
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handlePaymentStatusUpdate(inv._id, 'paid')} 
+                        className="p-2.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
+                        title="Confirmar Pago Total"
+                      >
+                        <HiCheckCircle className="w-4 h-4" />
+                        Pagado
+                      </button>
+                    )}
                     <button 
                       onClick={() => onDepositClick(inv)} 
-                      className="text-[13px] font-bold text-blue-600 hover:text-blue-800 hover:underline transition-all"
+                      className="p-2.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
+                      title="Registrar Pago Parcial / Seña"
                     >
+                      <HiCurrencyDollar className="w-4 h-4" />
                       Seña
                     </button>
                   </div>
@@ -123,8 +165,11 @@ const WorkshopInscriptionsTable = ({ inscriptions, loading, handlePaymentStatusU
           })}
           {inscriptions.length === 0 && (
             <tr>
-              <td colSpan={9} className="px-8 py-20 text-center text-gray-400 font-medium">
-                No se encontraron inscriptos para este taller.
+              <td colSpan={9} className="px-8 py-24 text-center">
+                <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-200">
+                  <HiClock className="w-10 h-10" />
+                </div>
+                <p className="text-gray-400 font-bold text-lg tracking-tight">No se encontraron inscriptos para este taller.</p>
               </td>
             </tr>
           )}

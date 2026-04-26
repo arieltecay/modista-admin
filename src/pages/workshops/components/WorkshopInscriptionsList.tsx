@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import Spinner from '@/components/shared/Spinner';
-import { HiCheckCircle, HiClock, HiCurrencyDollar, HiReply, HiMail, HiPhone, HiCalendar } from 'react-icons/hi';
+import { HiCheckCircle, HiClock, HiCurrencyDollar, HiReply, HiMail, HiPhone, HiCalendar, HiTrash } from 'react-icons/hi';
 import type { WorkshopInscription, Turno } from '../types';
 
 interface WorkshopInscriptionsListProps {
@@ -8,13 +8,15 @@ interface WorkshopInscriptionsListProps {
   loading: boolean;
   handlePaymentStatusUpdate: (id: string, status: 'paid' | 'pending') => Promise<void>;
   onDepositClick: (inv: WorkshopInscription) => void;
+  onDeleteClick: (id: string, name: string) => void;
 }
 
 const WorkshopInscriptionsList: FC<WorkshopInscriptionsListProps> = ({ 
   inscriptions, 
   loading, 
   handlePaymentStatusUpdate, 
-  onDepositClick 
+  onDepositClick,
+  onDeleteClick
 }) => {
   if (loading) return (
     <div className="p-12 flex justify-center bg-white rounded-[2rem] shadow-sm m-4">
@@ -117,6 +119,13 @@ const WorkshopInscriptionsList: FC<WorkshopInscriptionsListProps> = ({
               >
                 <HiCurrencyDollar className="w-4 h-4" />
                 Seña
+              </button>
+              <button 
+                onClick={() => onDeleteClick(inv._id, `${inv.nombre} ${inv.apellido}`)} 
+                className="bg-red-50 text-red-600 border border-red-100 p-3.5 rounded-xl active:scale-95 transition-all"
+                title="Eliminar Inscripción"
+              >
+                <HiTrash className="w-5 h-5" />
               </button>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { type FC, useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
-import { getWorkshopInscriptions, getWorkshopDetails, exportWorkshopInscriptions } from '@/services/inscriptions/workshopInscriptionService';
+import { getWorkshopInscriptions, getWorkshopDetails, exportWorkshopInscriptions, deleteWorkshopInscription } from '@/services/inscriptions/workshopInscriptionService';
 import { updateInscriptionPaymentStatus, updateInscriptionDeposit } from '@/services/inscriptions/inscriptionService';
 import { sendPaymentSuccessEmail } from '@/services/email/emailService';
 import { getCourseById } from '@/services/courses/coursesService';
@@ -12,8 +12,9 @@ import DepositModal from '@/pages/workshops/components/DepositModal';
 import WorkshopInscriptionsTable from '@/pages/workshops/components/WorkshopInscriptionsTable';
 import WorkshopInscriptionsList from '@/pages/workshops/components/WorkshopInscriptionsList';
 import Pagination from '@/components/shared/Pagination';
+import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 import type { WorkshopCourse, WorkshopInscription, Turno, WorkshopSortConfig } from './types';
-import { HiCalendar, HiUsers, HiClipboardCheck, HiChevronLeft, HiDownload, HiCurrencyDollar, HiUserGroup, HiBadgeCheck } from 'react-icons/hi';
+import { HiCalendar, HiUsers, HiClipboardCheck, HiChevronLeft, HiCurrencyDollar, HiUserGroup, HiBadgeCheck } from 'react-icons/hi';
 
 const WorkshopInscriptionsPage: FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +36,8 @@ const WorkshopInscriptionsPage: FC = () => {
   const [sortConfig, setSortConfig] = useState<WorkshopSortConfig>({ key: 'fechaInscripcion', direction: 'desc' });
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [selectedInscription, setSelectedInscription] = useState<WorkshopInscription | null>(null);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, inscriptionId: '', studentName: '' });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -139,6 +142,24 @@ const WorkshopInscriptionsPage: FC = () => {
     setTurnoFilter('all');
     setCurrentPage(1);
     fetchData(); // Force refresh
+  };
+
+  const handleDelete = (inscriptionId: string, studentName: string) => {
+    setDeleteModal({ isOpen: true, inscriptionId, studentName });
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await deleteWorkshopInscription(deleteModal.inscriptionId);
+      toast.success('Alumno eliminado correctamente.');
+      await fetchData();
+    } catch (err) {
+      toast.error('No se pudo eliminar al alumno. Por favor, intenta de nuevo.');
+    } finally {
+      setIsDeleting(false);
+      setDeleteModal({ isOpen: false, inscriptionId: '', studentName: '' });
+    }
   };
 
   if (loading && !course) return <div className="min-h-screen flex items-center justify-center"><Spinner /></div>;
@@ -263,12 +284,14 @@ const WorkshopInscriptionsPage: FC = () => {
           sortConfig={sortConfig} 
           handleSort={handleSort} 
           onDepositClick={(i) => { setSelectedInscription(i); setIsDepositModalOpen(true); }} 
+          onDeleteClick={(id, name) => handleDelete(id, name)}
         />
         <WorkshopInscriptionsList 
           inscriptions={inscriptions} 
           loading={loading} 
           handlePaymentStatusUpdate={handlePaymentStatusUpdate} 
           onDepositClick={(i) => { setSelectedInscription(i); setIsDepositModalOpen(true); }} 
+          onDeleteClick={(id, name) => handleDelete(id, name)}
         />
 
         <div className="p-8 bg-gray-50/50">
@@ -293,6 +316,15 @@ const WorkshopInscriptionsPage: FC = () => {
           isSubmitting={isSubmittingDeposit} 
         />
       )}
+
+      <ConfirmDeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+        onConfirm={confirmDelete}
+        itemName={deleteModal.studentName}
+        itemType="alumno"
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };

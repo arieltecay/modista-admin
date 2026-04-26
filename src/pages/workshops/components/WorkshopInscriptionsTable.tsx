@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import Spinner from '@/components/shared/Spinner';
-import { HiArrowUp, HiArrowDown, HiCheckCircle, HiClock, HiCurrencyDollar, HiReply } from 'react-icons/hi';
+import { HiArrowUp, HiArrowDown, HiCheckCircle, HiClock, HiCurrencyDollar, HiReply, HiTrash } from 'react-icons/hi';
 import type { WorkshopInscription, WorkshopSortConfig, Turno } from '../types';
 
 interface WorkshopInscriptionsTableProps {
@@ -10,6 +10,7 @@ interface WorkshopInscriptionsTableProps {
   sortConfig: WorkshopSortConfig;
   handleSort: (key: string) => void;
   onDepositClick: (inv: WorkshopInscription) => void;
+  onDeleteClick: (id: string, name: string) => void;
 }
 
 const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({ 
@@ -18,7 +19,8 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
   handlePaymentStatusUpdate, 
   sortConfig, 
   handleSort, 
-  onDepositClick 
+  onDepositClick,
+  onDeleteClick
 }) => {
   if (loading) return (
     <div className="p-24 flex flex-col items-center justify-center bg-white rounded-[2rem]">
@@ -158,9 +160,15 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
                       <HiCurrencyDollar className="w-4 h-4" />
                       Seña
                     </button>
-                  </div>
-                </td>
-              </tr>
+                    <button 
+                      onClick={() => onDeleteClick(inv._id, `${inv.nombre} ${inv.apellido}`)} 
+                      className="p-2.5 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
+                      title="Eliminar Inscripción"
+                    >
+                      <HiTrash className="w-4 h-4" />
+                    </button>
+                    </div>
+                    </td>              </tr>
             );
           })}
           {inscriptions.length === 0 && (

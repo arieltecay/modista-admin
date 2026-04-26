@@ -1,21 +1,21 @@
 import { useEffect, useState, type FC, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { getWorkshopDetails, deleteWorkshopInscription } from '@/services/inscriptions/workshopInscriptionService';
+import { getWorkshopDetails, deleteWorkshopInscription, exportWorkshopInscriptions } from '@/services/inscriptions/workshopInscriptionService';
 import { WorkshopDetailsResponse, WorkshopInscriptionItem } from '@/services/inscriptions/types';
 import Spinner from '@/components/shared/Spinner';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 import PaymentHistoryModal from '@/components/shared/PaymentHistoryModal';
 import { 
-  HiChevronLeft, 
-  HiCalendar, 
+  HiChevronLeft,
   HiClipboardCheck, 
   HiUsers, 
   HiBadgeCheck, 
   HiCurrencyDollar, 
   HiUserGroup,
   HiCash,
-  HiTrash
+  HiTrash,
+  HiDownload
 } from 'react-icons/hi';
 
 // Tipos para los modales
@@ -31,6 +31,7 @@ const WorkshopAnalyticsPage: FC = () => {
   const [data, setData] = useState<WorkshopDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   
   // Estados para modales
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -91,6 +92,19 @@ const WorkshopAnalyticsPage: FC = () => {
     }
   };
 
+  const handleExport = async () => {
+    if (!workshopId) return;
+    try {
+      setIsExporting(true);
+      await exportWorkshopInscriptions(workshopId, 'all');
+      toast.success('Exportación completada');
+    } catch (e) {
+      toast.error('Error al exportar');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
   };
@@ -126,18 +140,12 @@ const WorkshopAnalyticsPage: FC = () => {
           
           <div className="flex flex-wrap gap-3">
             <button 
-              onClick={() => navigate(`/admin/workshops/${workshopId}/schedule`)} 
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-100 transition-all active:scale-95 disabled:opacity-50"
             >
-              <HiCalendar className="w-5 h-5 opacity-90" />
-              Ver Agenda y Horarios
-            </button>
-            <button 
-              onClick={() => navigate(`/admin/workshops/${workshopId}`)}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-100 transition-all active:scale-95"
-            >
-              <HiUsers className="w-5 h-5 opacity-90" />
-              Ver Inscriptos y Pagos
+              <HiDownload className="w-5 h-5 opacity-90" />
+              {isExporting ? 'Exportando...' : 'Exportar Excel'}
             </button>
             <button 
               onClick={() => navigate(`/admin/workshops/closures/${workshopId}`)}

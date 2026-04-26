@@ -184,14 +184,6 @@ const WorkshopInscriptionsPage: FC = () => {
               <HiClipboardCheck className="w-5 h-5 opacity-90" />
               Cierre Mensual
             </button>
-            <button 
-              onClick={handleExport}
-              disabled={isExporting}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-100 transition-all active:scale-95 disabled:opacity-50"
-            >
-              <HiDownload className="w-5 h-5 opacity-90" />
-              {isExporting ? 'Exportando...' : 'Exportar Excel'}
-            </button>
           </div>
         </div>
 

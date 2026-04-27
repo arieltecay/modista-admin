@@ -6,6 +6,7 @@ import {
   BookOpenIcon, 
   ViewColumnsIcon, 
   CalendarIcon,
+  QuestionMarkCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   XMarkIcon,
@@ -20,12 +21,12 @@ const navigation = [
   { name: 'Inscripciones', href: '/admin/dashboard', icon: UsersIcon }, 
   { name: 'Carrusel', href: '/admin/carousel', icon: ViewColumnsIcon },
   { name: 'Talleres', href: '/admin/workshops', icon: CalendarIcon },
+  { name: 'Q&A (FAQ)', href: '/admin/faq', icon: QuestionMarkCircleIcon },
 ];
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ onClose }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const location = useLocation();
 
   const filteredNavigation = navigation.filter(item => 
     item.name.toLowerCase().includes(searchQuery.toLowerCase())

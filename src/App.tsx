@@ -14,6 +14,7 @@ import WorkshopInscriptionsPage from './pages/workshops/WorkshopInscriptionsPage
 import WorkshopSchedulePage from './pages/workshops/WorkshopSchedulePage';
 import WorkshopAnalyticsPage from './pages/workshops/WorkshopAnalyticsPage';
 import WorkshopMonthlyClosurePage from './pages/workshops/WorkshopMonthlyClosurePage';
+import FAQPage from './pages/faq/FAQPage';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
               <Route path="courses/add" element={<CourseAddPage />} />
               <Route path="courses/edit/:id" element={<CourseEditPage />} />
               <Route path="carousel" element={<CarouselManagerPage />} />
+              <Route path="faq" element={<FAQPage />} />
               <Route path="workshops" element={<WorkshopSelectorPage />} />
               <Route path="workshops/:id" element={<WorkshopInscriptionsPage />} />
               <Route path="workshops/:id/schedule" element={<WorkshopSchedulePage />} />

@@ -10,7 +10,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   XMarkIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { AdminSidebarProps } from './types';
 import { motion } from 'framer-motion';
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Inscripciones', href: '/admin/dashboard', icon: UsersIcon }, 
   { name: 'Carrusel', href: '/admin/carousel', icon: ViewColumnsIcon },
   { name: 'Talleres', href: '/admin/workshops', icon: CalendarIcon },
+  { name: 'Testimonios', href: '/admin/testimonials', icon: ChatBubbleLeftRightIcon },
   { name: 'Q&A (FAQ)', href: '/admin/faq', icon: QuestionMarkCircleIcon },
 ];
 

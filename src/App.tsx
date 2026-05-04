@@ -16,6 +16,7 @@ import WorkshopAnalyticsPage from './pages/workshops/WorkshopAnalyticsPage';
 import WorkshopMonthlyClosurePage from './pages/workshops/WorkshopMonthlyClosurePage';
 import FAQPage from './pages/faq/FAQPage';
 import TestimonialsPage from './pages/testimonials/TestimonialsPage';
+import ChatManager from './pages/ChatManager';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
               <Route path="courses/add" element={<CourseAddPage />} />
               <Route path="courses/edit/:id" element={<CourseEditPage />} />
               <Route path="carousel" element={<CarouselManagerPage />} />
+              <Route path="chat" element={<ChatManager />} />
               <Route path="faq" element={<FAQPage />} />
               <Route path="testimonials" element={<TestimonialsPage />} />
               <Route path="workshops" element={<WorkshopSelectorPage />} />

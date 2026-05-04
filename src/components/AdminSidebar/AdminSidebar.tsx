@@ -22,6 +22,7 @@ const navigation = [
   { name: 'Inscripciones', href: '/admin/dashboard', icon: UsersIcon }, 
   { name: 'Carrusel', href: '/admin/carousel', icon: ViewColumnsIcon },
   { name: 'Talleres', href: '/admin/workshops', icon: CalendarIcon },
+  // { name: 'Mensajes', href: '/admin/chat', icon: ChatBubbleLeftRightIcon },
   { name: 'Testimonios', href: '/admin/testimonials', icon: ChatBubbleLeftRightIcon },
   { name: 'Q&A (FAQ)', href: '/admin/faq', icon: QuestionMarkCircleIcon },
 ];

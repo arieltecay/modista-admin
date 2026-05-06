@@ -17,6 +17,13 @@ const PaymentHistoryModal: FC<PaymentHistoryModalProps> = ({ isOpen, onClose, in
   const [historyData, setHistoryData] = useState<PaymentHistoryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState(''); // Inicialmente vacío
+  const [amount, setAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<{ id: string; amount: number } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchHistory = async () => {
     if (!inscriptionId) return;

@@ -90,8 +90,8 @@ export const addPayment = (
 ): Promise<Inscription> => 
     apiClient.post(`/inscriptions/${inscriptionId}/payments`, paymentData);
 
-export const getPaymentHistory = (inscriptionId: string): Promise<PaymentHistoryResponse> =>
-    apiClient.get(`/inscriptions/${inscriptionId}/payments`);
+export const getPaymentHistory = (inscriptionId: string, startDate?: string): Promise<PaymentHistoryResponse> =>
+    apiClient.get(`/inscriptions/${inscriptionId}/payments`, { params: { startDate } });
 
 export const deletePayment = (inscriptionId: string, paymentId: string): Promise<PaymentHistoryResponse> =>
     apiClient.delete(`/inscriptions/${inscriptionId}/payments/${paymentId}`);

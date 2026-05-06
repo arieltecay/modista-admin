@@ -16,24 +16,30 @@ interface PaymentHistoryModalProps {
 const PaymentHistoryModal: FC<PaymentHistoryModalProps> = ({ isOpen, onClose, inscriptionId, studentName, coursePrice }) => {
   const [historyData, setHistoryData] = useState<PaymentHistoryData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [notes, setNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [paymentToDelete, setPaymentToDelete] = useState<{ id: string; amount: number } | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [startDate, setStartDate] = useState(''); // Inicialmente vacío
 
   const fetchHistory = async () => {
     if (!inscriptionId) return;
     try {
       setLoading(true);
-      const response = await getPaymentHistory(inscriptionId);
+      const response = await getPaymentHistory(inscriptionId, startDate);
       setHistoryData(response.data);
+      // Actualizar startDate con la fecha real aplicada por la API
+      if (response.data.startDate) {
+        setStartDate(response.data.startDate);
+      }
     } catch (err) { toast.error('Error al cargar historial'); } finally { setLoading(false); }
   };
 
   useEffect(() => { if (isOpen) fetchHistory(); }, [isOpen, inscriptionId]);
+  
+  // Actualizar si el usuario cambia el input de fecha manualmente
+  const handleDateChange = (newDate: string) => {
+    setStartDate(newDate);
+  };
+  
+  // Trigger de recarga al cambiar la fecha seleccionada
+  useEffect(() => { if (isOpen && startDate) fetchHistory(); }, [startDate]);
 
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +65,10 @@ const PaymentHistoryModal: FC<PaymentHistoryModalProps> = ({ isOpen, onClose, in
           <button onClick={onClose} className="text-2xl">&times;</button>
         </header>
         <div className="p-6 overflow-y-auto space-y-6">
+          <div className="flex items-center gap-4 border-b pb-4">
+            <label className="text-sm font-bold">Ver desde:</label>
+            <input type="date" value={startDate} onChange={e => handleDateChange(e.target.value)} className="border p-1 rounded" />
+          </div>
           {loading ? <Spinner /> : historyData && (
             <>
               <div className="border rounded-lg overflow-hidden">
@@ -72,8 +82,8 @@ const PaymentHistoryModal: FC<PaymentHistoryModalProps> = ({ isOpen, onClose, in
                 </table>
               </div>
               <div className="flex justify-around bg-gray-50 p-4 rounded-lg font-bold">
-                <div><p className="text-xs text-gray-500">Total</p><p>${coursePrice}</p></div>
-                <div><p className="text-xs text-gray-500">Pagado</p><p className="text-green-600">${historyData.totalPaid}</p></div>
+                <div><p className="text-xs text-gray-500">Total Curso</p><p>${coursePrice}</p></div>
+                <div><p className="text-xs text-gray-500">Pagado (en este rango)</p><p className="text-green-600">${historyData.totalPaid}</p></div>
               </div>
               <form onSubmit={handleAddPayment} className="space-y-4 border-t pt-4">
                 <h3 className="font-bold">Nuevo Pago</h3>

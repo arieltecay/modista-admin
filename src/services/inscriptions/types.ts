@@ -80,6 +80,7 @@ export interface PaymentHistoryData {
   history: Payment[];
   totalPaid: number;
   coursePrice: number;
+  startDate?: string;
 }
 
 export interface PaymentHistoryResponse {

@@ -17,6 +17,8 @@ import WorkshopMonthlyClosurePage from './pages/workshops/WorkshopMonthlyClosure
 import FAQPage from './pages/faq/FAQPage';
 import TestimonialsPage from './pages/testimonials/TestimonialsPage';
 import ChatManager from './pages/ChatManager';
+import TariffListPage from './pages/tariffs/TariffListPage';
+import TariffFormPage from './pages/tariffs/TariffFormPage';
 
 function App() {
   return (
@@ -35,8 +37,10 @@ function App() {
               <Route path="chat" element={<ChatManager />} />
               <Route path="faq" element={<FAQPage />} />
               <Route path="testimonials" element={<TestimonialsPage />} />
+              <Route path="tariffs" element={<TariffListPage />} />
+              <Route path="tariffs/add" element={<TariffFormPage />} />
+              <Route path="tariffs/edit/:id" element={<TariffFormPage />} />
               <Route path="workshops" element={<WorkshopSelectorPage />} />
-              <Route path="workshops/:id" element={<WorkshopInscriptionsPage />} />
               <Route path="workshops/:id/schedule" element={<WorkshopSchedulePage />} />
               <Route path="workshops/more-info/:id" element={<WorkshopAnalyticsPage />} />
               <Route path="workshops/closures/:id" element={<WorkshopMonthlyClosurePage />} />

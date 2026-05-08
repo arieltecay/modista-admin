@@ -11,7 +11,8 @@ import {
   ChevronRightIcon,
   XMarkIcon,
   MagnifyingGlassIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { AdminSidebarProps } from './types';
 import { motion } from 'framer-motion';
@@ -22,6 +23,7 @@ const navigation = [
   { name: 'Inscripciones', href: '/admin/dashboard', icon: UsersIcon }, 
   { name: 'Carrusel', href: '/admin/carousel', icon: ViewColumnsIcon },
   { name: 'Talleres', href: '/admin/workshops', icon: CalendarIcon },
+  { name: 'Tarifas', href: '/admin/tariffs', icon: CurrencyDollarIcon },
   // { name: 'Mensajes', href: '/admin/chat', icon: ChatBubbleLeftRightIcon },
   { name: 'Testimonios', href: '/admin/testimonials', icon: ChatBubbleLeftRightIcon },
   { name: 'Q&A (FAQ)', href: '/admin/faq', icon: QuestionMarkCircleIcon },

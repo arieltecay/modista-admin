@@ -20,8 +20,7 @@ const TrainingTab: React.FC = () => {
     setLoading(true);
     try {
       const response = await botInstructionService.getInstructions();
-      // Asegurar que siempre sea un array
-      setInstructions(Array.isArray(response.data) ? response.data : []);
+      setInstructions(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error("Error cargando instrucciones", error);
       setInstructions([]);

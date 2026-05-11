@@ -19,7 +19,7 @@ const WorkshopAnalyticsPage = lazy(() => import('./pages/workshops/WorkshopAnaly
 const WorkshopMonthlyClosurePage = lazy(() => import('./pages/workshops/WorkshopMonthlyClosurePage'));
 const FAQPage = lazy(() => import('./pages/faq/FAQPage'));
 const TestimonialsPage = lazy(() => import('./pages/testimonials/TestimonialsPage'));
-const ChatManager = lazy(() => import('./pages/ChatManager'));
+const BotMessagePage = lazy(() => import('./pages/bot-message/BotMessagePage'));
 const TariffListPage = lazy(() => import('./pages/tariffs/TariffListPage'));
 const TariffFormPage = lazy(() => import('./pages/tariffs/TariffFormPage'));
 
@@ -44,7 +44,8 @@ function App() {
                 <Route path="courses/add" element={<CourseAddPage />} />
                 <Route path="courses/edit/:id" element={<CourseEditPage />} />
                 <Route path="carousel" element={<CarouselManagerPage />} />
-                <Route path="chat" element={<ChatManager />} />
+                <Route path="chat" element={<BotMessagePage />} />
+
                 <Route path="faq" element={<FAQPage />} />
                 <Route path="testimonials" element={<TestimonialsPage />} />
                 <Route path="tariffs" element={<TariffListPage />} />

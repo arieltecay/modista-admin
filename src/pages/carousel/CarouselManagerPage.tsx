@@ -189,21 +189,20 @@ export const CarouselManagerPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-8 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Gestión de Carrusel</h1>
-          <p className="text-gray-500">Ordena y administra las imágenes de la página principal.</p>
-        </div>
-        <button 
-          onClick={() => openModal()} 
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2"
-        >
-          <PlusIcon className="w-5 h-5" />
-          Nuevo Slide
-        </button>
-      </div>
-
+   <div className="p-4 sm:p-8 max-w-5xl mx-auto">
+     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+       <div>
+         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Gestión de Banner Principal</h1>
+         <p className="text-gray-500">Administra la imagen principal de la web. Nota: Solo se mostrará el primero para máxima velocidad.</p>
+       </div>
+       <button
+         onClick={() => openModal()}
+         className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2"
+       >
+         <PlusIcon className="w-5 h-5" />
+         Nuevo Banner
+       </button>
+     </div>
       {loading ? (
         <div className="flex justify-center p-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

@@ -7,6 +7,7 @@ import AdminLayout from './components/AdminLayout/AdminLayout';
 
 // Lazy loading components
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
 const InscriptionsListPage = lazy(() => import('./pages/inscriptions/InscriptionsListPage'));
 const CourseListPage = lazy(() => import('./pages/courses/CourseListPage'));
 const CourseAddPage = lazy(() => import('./pages/courses/CourseAddPage'));
@@ -39,7 +40,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']} />}>
               <Route element={<AdminLayout />}>
-                <Route path="dashboard" element={<InscriptionsListPage />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="inscriptions" element={<InscriptionsListPage />} />
                 <Route path="courses" element={<CourseListPage />} />
                 <Route path="courses/add" element={<CourseAddPage />} />
                 <Route path="courses/edit/:id" element={<CourseEditPage />} />

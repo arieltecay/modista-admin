@@ -6,12 +6,12 @@ import {
   exportInscriptions,
 } from '@/services/inscriptions/inscriptionService';
 import { sendPaymentSuccessEmail, sendCoursePaidEmail } from '@/services/email/emailService';
-import { getCoursesAdmin } from '@/services/courses/coursesService';
 import toast from 'react-hot-toast';
 import InscriptionsListMobile from '@/pages/inscriptions/components/InscriptionsListMobile';
 import InscriptionsTableDesktop from '@/pages/inscriptions/components/InscriptionsTableDesktop';
 import Pagination from '@/components/shared/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useCourses } from '@/hooks/useCourses';
 import type { InscriptionsCount } from '@/services/types';
 import type { Inscription } from './components/types';
 import type { SortConfig } from './types';
@@ -35,7 +35,7 @@ const InscriptionsAdminPage: React.FC = () => {
   const [courseFilter, setCourseFilter] = useState<string>('');
   const debouncedCourseFilter = useDebounce(courseFilter, 500);
 
-  const [courseSuggestions, setCourseSuggestions] = useState<any[]>([]);
+  const { courses, loading: coursesLoading } = useCourses();
   const [inscriptionStats, setInscriptionStats] = useState<(InscriptionsCount & { searchTotal?: number }) | null>(null);
 
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, courseId: null as string | null, courseTitle: '' });
@@ -85,22 +85,6 @@ const InscriptionsAdminPage: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, paymentStatusFilter, debouncedCourseFilter]);
-
-  useEffect(() => {
-    if (debouncedCourseFilter) {
-      const fetchSuggestions = async () => {
-        try {
-          const data = await getCoursesAdmin(1, 10, undefined, undefined, debouncedCourseFilter as string);
-          setCourseSuggestions(data.data);
-        } catch (err: any) {
-          console.error('Error fetching course suggestions:', err);
-        }
-      };
-      fetchSuggestions();
-    } else {
-      setCourseSuggestions([]);
-    }
-  }, [debouncedCourseFilter]);
 
   const handlePaymentStatusUpdate = async (inscriptionId: string, newStatus: 'paid' | 'pending') => {
     try {
@@ -235,33 +219,48 @@ const InscriptionsAdminPage: React.FC = () => {
           />
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-          <div className="flex flex-col md:flex-row justify-between items-center w-full mb-6 gap-4">
-            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-              <div className="relative w-full md:max-w-md">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg">
+          <div className="flex flex-col xl:flex-row justify-between items-center w-full mb-6 gap-4">
+            <div className="flex flex-col lg:flex-row gap-4 w-full xl:w-auto">
+              <div className="relative w-full lg:w-64 xl:w-80">
                 <SearchIcon />
                 <input
                   type="text"
-                  placeholder="Buscar..."
+                  placeholder="Buscar alumna..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 pr-4 py-2 w-full border border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  className="pl-12 pr-4 py-2 w-full border border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm"
                 />
               </div>
-              <select
-                value={paymentStatusFilter}
-                onChange={(e) => setPaymentStatusFilter(e.target.value as 'all' | 'pending' | 'paid')}
-                className="px-4 py-2 border border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-              >
-                <option value="all">Todos los pagos</option>
-                <option value="paid">Pagados</option>
-                <option value="pending">Pendientes</option>
-              </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:w-auto">
+                <select
+                  value={paymentStatusFilter}
+                  onChange={(e) => setPaymentStatusFilter(e.target.value as 'all' | 'pending' | 'paid')}
+                  className="px-4 py-2 w-full border border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm cursor-pointer"
+                >
+                  <option value="all">Todos los pagos</option>
+                  <option value="paid">Pagados</option>
+                  <option value="pending">Pendientes</option>
+                </select>
+                <select
+                  value={courseFilter}
+                  onChange={(e) => setCourseFilter(e.target.value)}
+                  className="px-4 py-2 w-full lg:max-w-[250px] border border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm cursor-pointer truncate"
+                  disabled={coursesLoading}
+                >
+                  <option value="">Todos los cursos</option>
+                  {courses.map((course) => (
+                    <option key={course.id || course._id} value={course.title}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <button
               onClick={handleExport}
               disabled={isExporting}
-              className="w-full md:w-auto px-6 py-2 text-center font-semibold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:outline-none transition-all duration-200 disabled:bg-gray-400"
+              className="w-full xl:w-auto px-6 py-2 text-center font-semibold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-700 focus:outline-none transition-all duration-200 disabled:bg-gray-400 text-sm"
             >
               {isExporting ? 'Exportando...' : 'Exportar a Excel'}
             </button>

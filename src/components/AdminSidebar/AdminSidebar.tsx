@@ -20,7 +20,7 @@ import { motion } from 'framer-motion';
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
   { name: 'Cursos', href: '/admin/courses', icon: BookOpenIcon },
-  { name: 'Inscripciones', href: '/admin/dashboard', icon: UsersIcon }, 
+  { name: 'Inscripciones', href: '/admin/inscriptions', icon: UsersIcon }, 
   { name: 'Carrusel', href: '/admin/carousel', icon: ViewColumnsIcon },
   { name: 'Talleres', href: '/admin/workshops', icon: CalendarIcon },
   { name: 'Tarifas', href: '/admin/tariffs', icon: CurrencyDollarIcon },

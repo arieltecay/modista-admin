@@ -54,6 +54,7 @@ function App() {
                 <Route path="tariffs/add" element={<TariffFormPage />} />
                 <Route path="tariffs/edit/:id" element={<TariffFormPage />} />
                 <Route path="workshops" element={<WorkshopSelectorPage />} />
+                <Route path="workshops/:id" element={<WorkshopInscriptionsPage />} />
                 <Route path="workshops/:id/schedule" element={<WorkshopSchedulePage />} />
                 <Route path="workshops/more-info/:id" element={<WorkshopAnalyticsPage />} />
                 <Route path="workshops/closures/:id" element={<WorkshopMonthlyClosurePage />} />

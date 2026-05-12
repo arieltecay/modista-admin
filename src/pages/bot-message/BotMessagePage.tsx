@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as chatService from '../../services/chatService';
 import { faqService } from '../../services/faq/faqService';
-import { FaRobot, FaComments, FaGraduationCap } from 'react-icons/fa';
+import { FaRobot, FaComments, FaGraduationCap, FaTrash } from 'react-icons/fa';
 import ConversationsTab from './tabs/ConversationsTab';
 import TrainingTab from './tabs/TrainingTab';
+import GlobalModal from '../../components/shared/GlobalModal';
 
 type TabType = 'conversations' | 'training';
 
@@ -17,6 +18,11 @@ const BotMessagePage: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
+
+  // Modal State
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [isDeleteMsgModalOpen, setIsDeleteMsgModalOpen] = useState(false);
+  const [msgToDelete, setMsgToDelete] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -90,6 +96,41 @@ const BotMessagePage: React.FC = () => {
     }
   };
 
+  const handleClearChat = async () => {
+    if (!selectedChat) return;
+    setLoading(true);
+    try {
+      await chatService.clearChat(selectedChat._id.platform, selectedChat._id.platform_id);
+      setMessages([]);
+      setIsClearModalOpen(false);
+      loadChats();
+    } catch (err) {
+      alert("Error al limpiar el historial");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteMessage = async () => {
+    if (!msgToDelete || !selectedChat) return;
+    setLoading(true);
+    try {
+      await chatService.deleteMessage(msgToDelete);
+      setMessages(prev => prev.filter(m => m._id !== msgToDelete));
+      setIsDeleteMsgModalOpen(false);
+      setMsgToDelete(null);
+    } catch (err) {
+      alert("Error al eliminar el mensaje");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmDeleteMessage = (id: string) => {
+    setMsgToDelete(id);
+    setIsDeleteMsgModalOpen(true);
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen flex flex-col">
       {/* Header */}
@@ -132,6 +173,8 @@ const BotMessagePage: React.FC = () => {
               onSendMessage={handleSendMessage}
               onNewMessageChange={setNewMessage}
               onConvertToFAQ={handleConvertToFAQ}
+              onDeleteMessage={confirmDeleteMessage}
+              onClearChat={() => setIsClearModalOpen(true)}
               messagesEndRef={messagesEndRef}
             />
           ) : (
@@ -141,6 +184,61 @@ const BotMessagePage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modales de Confirmación */}
+      <GlobalModal
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        title="Limpiar Historial de Chat"
+        footer={
+          <>
+            <button
+              onClick={() => setIsClearModalOpen(false)}
+              className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleClearChat}
+              disabled={loading}
+              className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:opacity-50"
+            >
+              {loading ? 'Limpiando...' : 'Limpiar Todo'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-500">
+          ¿Estás seguro de que quieres eliminar todo el historial de este chat? Esta acción borrará físicamente todos los mensajes de la base de datos y no se puede deshacer.
+        </p>
+      </GlobalModal>
+
+      <GlobalModal
+        isOpen={isDeleteMsgModalOpen}
+        onClose={() => setIsDeleteMsgModalOpen(false)}
+        title="Eliminar Mensaje"
+        footer={
+          <>
+            <button
+              onClick={() => setIsDeleteMsgModalOpen(false)}
+              className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleDeleteMessage}
+              disabled={loading}
+              className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:opacity-50"
+            >
+              {loading ? 'Eliminando...' : 'Eliminar'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-500">
+          ¿Estás seguro de que quieres eliminar este mensaje? Esta acción es permanente.
+        </p>
+      </GlobalModal>
     </div>
   );
 };

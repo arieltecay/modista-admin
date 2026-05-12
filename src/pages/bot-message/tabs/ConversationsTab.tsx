@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaPaperPlane, FaRobot, FaUserEdit } from 'react-icons/fa';
+import { FaPaperPlane, FaRobot, FaUserEdit, FaTrash } from 'react-icons/fa';
 
 interface ConversationsTabProps {
   chats: any[];
@@ -11,6 +11,8 @@ interface ConversationsTabProps {
   onSendMessage: (e: React.FormEvent) => void;
   onNewMessageChange: (val: string) => void;
   onConvertToFAQ: (text: string) => void;
+  onDeleteMessage: (id: string) => void;
+  onClearChat: () => void;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -24,6 +26,8 @@ const ConversationsTab: React.FC<ConversationsTabProps> = ({
   onSendMessage,
   onNewMessageChange,
   onConvertToFAQ,
+  onDeleteMessage,
+  onClearChat,
   messagesEndRef
 }) => {
   return (
@@ -53,8 +57,17 @@ const ConversationsTab: React.FC<ConversationsTabProps> = ({
         {selectedChat ? (
           <>
             <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-              <h2 className="font-bold text-gray-800">Chat con {selectedChat._id.platform_id}</h2>
-              <span className="px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wider">WhatsApp Oficial</span>
+              <div className="flex flex-col">
+                <h2 className="font-bold text-gray-800">Chat con {selectedChat._id.platform_id}</h2>
+                <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">WhatsApp Oficial</span>
+              </div>
+              <button 
+                onClick={onClearChat}
+                className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-xs font-semibold border border-red-100"
+                title="Limpiar todo el historial de este chat"
+              >
+                <FaTrash size={12} /> Limpiar Chat
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
@@ -64,19 +77,28 @@ const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     <div className={`p-3 rounded-2xl shadow-sm ${msg.direction === 'inbound' ? 'bg-white text-gray-800 rounded-tl-none border' : 'bg-indigo-600 text-white rounded-tr-none'}`}>
                       {msg.body}
                     </div>
-                    <div className="flex items-center gap-2 mt-1 px-1">
-                      <span className="text-[10px] text-gray-400">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </span>
-                      {msg.direction === 'inbound' && (
-                        <button 
-                          onClick={() => onConvertToFAQ(msg.body)}
-                          className="text-[10px] text-indigo-500 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity"
-                          title="Guardar como FAQ"
-                        >
-                          <FaUserEdit /> Entrenar Mila
-                        </button>
-                      )}
+                    <div className="flex items-center justify-between gap-4 mt-1 px-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(msg.timestamp).toLocaleTimeString()}
+                        </span>
+                        {msg.direction === 'inbound' && (
+                          <button 
+                            onClick={() => onConvertToFAQ(msg.body)}
+                            className="text-[10px] text-indigo-500 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity"
+                            title="Guardar como FAQ"
+                          >
+                            <FaUserEdit /> Entrenar Mila
+                          </button>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => onDeleteMessage(msg._id)}
+                        className="text-[10px] text-red-400 opacity-0 group-hover:opacity-100 hover:text-red-600 transition-all flex items-center gap-1"
+                        title="Eliminar mensaje"
+                      >
+                        <FaTrash size={10} /> Borrar
+                      </button>
                     </div>
                   </div>
                 </div>

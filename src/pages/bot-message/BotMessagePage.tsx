@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as chatService from '../../services/chatService';
 import { faqService } from '../../services/faq/faqService';
-import { FaRobot, FaComments, FaGraduationCap, FaTrash } from 'react-icons/fa';
+import { FaRobot, FaComments, FaGraduationCap, FaTrash, FaWhatsapp } from 'react-icons/fa';
 import ConversationsTab from './tabs/ConversationsTab';
 import TrainingTab from './tabs/TrainingTab';
+import TemplatesTab from './tabs/TemplatesTab';
 import GlobalModal from '../../components/shared/GlobalModal';
 
-type TabType = 'conversations' | 'training';
+type TabType = 'conversations' | 'training' | 'templates';
 
 const BotMessagePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('conversations');
@@ -157,6 +158,12 @@ const BotMessagePage: React.FC = () => {
         >
           <FaGraduationCap /> Entrenamiento
         </button>
+        <button 
+          onClick={() => setActiveTab('templates')}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition-all ${activeTab === 'templates' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+        >
+          <FaWhatsapp /> Plantillas
+        </button>
       </div>
       
       {/* Content Area */}
@@ -177,9 +184,13 @@ const BotMessagePage: React.FC = () => {
               onClearChat={() => setIsClearModalOpen(true)}
               messagesEndRef={messagesEndRef}
             />
-          ) : (
+          ) : activeTab === 'training' ? (
             <div className="h-full overflow-y-auto custom-scrollbar">
               <TrainingTab />
+            </div>
+          ) : (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <TemplatesTab />
             </div>
           )}
         </div>

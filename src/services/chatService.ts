@@ -7,3 +7,10 @@ export const sendMessage = (platform: string, platformId: string, body: string) 
 
 export const deleteMessage = (messageId: string) => apiClient.delete(`/chat/messages/${messageId}`);
 export const clearChat = (platform: string, platformId: string) => apiClient.delete(`/chat/${platform}/${platformId}/clear`);
+
+// WhatsApp Templates
+export const getTemplates = () => apiClient.get('/notifications/whatsapp/templates');
+export const createTemplate = (data: any) => apiClient.post('/notifications/whatsapp/templates', data);
+export const deleteTemplate = (name: string) => apiClient.delete(`/notifications/whatsapp/templates/${name}`);
+export const sendTestTemplate = (data: { to: string; templateName: string; components: any[] }) => 
+  apiClient.post('/notifications/whatsapp/templates/test', data);

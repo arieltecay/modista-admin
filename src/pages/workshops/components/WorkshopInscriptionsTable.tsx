@@ -6,21 +6,21 @@ import type { WorkshopInscription, WorkshopSortConfig, Turno } from '../types';
 interface WorkshopInscriptionsTableProps {
   inscriptions: WorkshopInscription[];
   loading: boolean;
-  handlePaymentStatusUpdate: (id: string, status: 'paid' | 'pending') => Promise<void>;
   sortConfig: WorkshopSortConfig;
   handleSort: (key: string) => void;
-  onDepositClick: (inv: WorkshopInscription) => void;
+  onManagePaymentClick: (inv: WorkshopInscription) => void;
   onDeleteClick: (id: string, name: string) => void;
+  lastMonthlyClosureDate?: string;
 }
 
 const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({ 
   inscriptions, 
   loading, 
-  handlePaymentStatusUpdate, 
   sortConfig, 
   handleSort, 
-  onDepositClick,
-  onDeleteClick
+  onManagePaymentClick,
+  onDeleteClick,
+  lastMonthlyClosureDate
 }) => {
   if (loading) return (
     <div className="p-24 flex flex-col items-center justify-center bg-white rounded-[2rem]">
@@ -46,6 +46,19 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
     if (!turnoId || typeof turnoId === 'string') return '-';
     return `${turnoId.diaSemana} ${turnoId.horaInicio}hs`;
   };
+
+  const getEffectiveStartDate = () => {
+    if (lastMonthlyClosureDate) {
+      const d = new Date(lastMonthlyClosureDate);
+      d.setDate(d.getDate() + 1);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  };
+
+  const startDate = getEffectiveStartDate();
   
   return (
     <div className="overflow-x-auto hidden md:block">
@@ -71,16 +84,10 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
               Horario
             </th>
             <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-              Precio
-            </th>
-            <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-              Pagado
+              Pagado Ciclo
             </th>
             <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               Saldo
-            </th>
-            <th className="px-8 py-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-              Estado
             </th>
             <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               Acciones
@@ -89,8 +96,13 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
         </thead>
         <tbody className="divide-y divide-gray-50">
           {inscriptions.map((inv) => {
-            const totalPaid = inv.totalPaid || inv.depositAmount || 0;
-            const balance = Math.max(0, inv.coursePrice - totalPaid);
+            const paidInCycle = inv.paymentHistory
+              ? inv.paymentHistory
+                  .filter(p => new Date(p.date) >= startDate)
+                  .reduce((sum, p) => sum + p.amount, 0)
+              : 0;
+
+            const balance = Math.max(0, inv.coursePrice - paidInCycle);
             
             return (
               <tr key={inv._id} className="hover:bg-gray-50/50 transition-colors group">
@@ -111,54 +123,29 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
                     {getTurnoInfo(inv.turnoId)}
                   </div>
                 </td>
-                <td className="px-8 py-6 whitespace-nowrap text-xs font-bold text-gray-500">
-                  {formatCurrency(inv.coursePrice)}
-                </td>
                 <td className="px-8 py-6 whitespace-nowrap text-sm font-black text-emerald-600 tracking-tighter">
-                  {formatCurrency(totalPaid)}
-                </td>
-                <td className="px-8 py-6 whitespace-nowrap text-sm font-black text-red-500 tracking-tighter">
-                  {balance > 0 ? formatCurrency(balance) : '-'}
+                  {formatCurrency(paidInCycle)}
                 </td>
                 <td className="px-8 py-6 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black tracking-widest border ${
-                    inv.paymentStatus === 'paid' 
-                      ? 'bg-green-50 text-green-600 border-green-100' 
-                      : inv.paymentStatus === 'partial'
-                        ? 'bg-amber-50 text-amber-600 border-amber-100'
-                        : 'bg-red-50 text-red-600 border-red-100'
-                  }`}>
-                    {inv.paymentStatus === 'paid' ? 'PAGADO' : inv.paymentStatus === 'partial' ? 'PARCIAL' : 'PENDIENTE'}
-                  </span>
+                  {balance > 0 ? (
+                    <span className="text-sm font-black text-red-500 tracking-tighter">
+                      {formatCurrency(balance)}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-green-50 text-green-600 border border-green-100 uppercase tracking-widest">
+                      PAGADO
+                    </span>
+                  )}
                 </td>
                 <td className="px-8 py-6 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end gap-2">
-                    {inv.paymentStatus === 'paid' ? (
-                      <button 
-                        onClick={() => handlePaymentStatusUpdate(inv._id, 'pending')} 
-                        className="p-2.5 text-gray-400 bg-gray-50 hover:bg-gray-200 hover:text-gray-700 rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
-                        title="Revertir a Pendiente"
-                      >
-                        <HiReply className="w-4 h-4" />
-                        Revertir
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => handlePaymentStatusUpdate(inv._id, 'paid')} 
-                        className="p-2.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
-                        title="Confirmar Pago Total"
-                      >
-                        <HiCheckCircle className="w-4 h-4" />
-                        Pagado
-                      </button>
-                    )}
                     <button 
-                      onClick={() => onDepositClick(inv)} 
+                      onClick={() => onManagePaymentClick(inv)} 
                       className="p-2.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
-                      title="Registrar Pago Parcial / Seña"
+                      title="Gestionar Pago"
                     >
                       <HiCurrencyDollar className="w-4 h-4" />
-                      Seña
+                      Gestionar Pago
                     </button>
                     <button 
                       onClick={() => onDeleteClick(inv._id, `${inv.nombre} ${inv.apellido}`)} 
@@ -167,13 +154,14 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
                     >
                       <HiTrash className="w-4 h-4" />
                     </button>
-                    </div>
-                    </td>              </tr>
+                  </div>
+                </td>
+              </tr>
             );
           })}
           {inscriptions.length === 0 && (
             <tr>
-              <td colSpan={9} className="px-8 py-24 text-center">
+              <td colSpan={7} className="px-8 py-24 text-center">
                 <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-200">
                   <HiClock className="w-10 h-10" />
                 </div>

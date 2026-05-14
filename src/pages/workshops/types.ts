@@ -5,6 +5,16 @@ export interface WorkshopCourse {
   title: string;
   courseId?: string;
   isPresencial?: boolean;
+  price: number;
+  lastMonthlyClosureDate?: string;
+}
+
+export interface Payment {
+  _id?: string;
+  amount: number;
+  date: string;
+  paymentMethod?: string;
+  notes?: string;
 }
 
 export interface Turno {
@@ -36,12 +46,13 @@ export interface WorkshopInscription {
   paymentStatus: 'paid' | 'pending' | 'partial';
   coursePrice: number;
   depositAmount: number;
-  totalPaid?: number;
+  totalPaid: number;
   depositDate?: string;
   isReserved: boolean;
   fechaInscripcion: string;
   turnoId: string | Turno;
   courseTitle: string;
+  paymentHistory?: Payment[];
 }
 
 export interface WorkshopSortConfig {

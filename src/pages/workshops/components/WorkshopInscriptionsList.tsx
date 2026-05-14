@@ -6,17 +6,17 @@ import type { WorkshopInscription, Turno } from '../types';
 interface WorkshopInscriptionsListProps {
   inscriptions: WorkshopInscription[];
   loading: boolean;
-  handlePaymentStatusUpdate: (id: string, status: 'paid' | 'pending') => Promise<void>;
-  onDepositClick: (inv: WorkshopInscription) => void;
+  onManagePaymentClick: (inv: WorkshopInscription) => void;
   onDeleteClick: (id: string, name: string) => void;
+  lastMonthlyClosureDate?: string;
 }
 
 const WorkshopInscriptionsList: FC<WorkshopInscriptionsListProps> = ({ 
   inscriptions, 
   loading, 
-  handlePaymentStatusUpdate, 
-  onDepositClick,
-  onDeleteClick
+  onManagePaymentClick,
+  onDeleteClick,
+  lastMonthlyClosureDate
 }) => {
   if (loading) return (
     <div className="p-12 flex justify-center bg-white rounded-[2rem] shadow-sm m-4">
@@ -33,11 +33,29 @@ const WorkshopInscriptionsList: FC<WorkshopInscriptionsListProps> = ({
     return `${turnoId.diaSemana} ${turnoId.horaInicio}hs`;
   };
 
+  const getEffectiveStartDate = () => {
+    if (lastMonthlyClosureDate) {
+      const d = new Date(lastMonthlyClosureDate);
+      d.setDate(d.getDate() + 1);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  };
+
+  const startDate = getEffectiveStartDate();
+
   return (
     <div className="md:hidden space-y-6 p-4">
       {inscriptions.map((inv) => {
-        const totalPaid = inv.totalPaid || inv.depositAmount || 0;
-        const balance = Math.max(0, inv.coursePrice - totalPaid);
+        const paidInCycle = inv.paymentHistory
+          ? inv.paymentHistory
+              .filter(p => new Date(p.date) >= startDate)
+              .reduce((sum, p) => sum + p.amount, 0)
+          : 0;
+
+        const balance = Math.max(0, inv.coursePrice - paidInCycle);
         
         return (
           <div key={inv._id} className="bg-white p-7 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -57,15 +75,11 @@ const WorkshopInscriptionsList: FC<WorkshopInscriptionsListProps> = ({
                   </div>
                 </div>
               </div>
-              <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest border ${
-                inv.paymentStatus === 'paid' 
-                  ? 'bg-green-50 text-green-600 border-green-100' 
-                  : inv.paymentStatus === 'partial'
-                    ? 'bg-amber-50 text-amber-600 border-amber-100'
-                    : 'bg-red-50 text-red-600 border-red-100'
-              }`}>
-                {inv.paymentStatus === 'paid' ? 'PAGADO' : inv.paymentStatus === 'partial' ? 'PARCIAL' : 'PENDIENTE'}
-              </span>
+              {balance <= 0 && (
+                <span className="px-3 py-1 rounded-full text-[10px] font-black tracking-widest bg-green-50 text-green-600 border border-green-100 uppercase">
+                  PAGADO
+                </span>
+              )}
             </div>
             
             <div className="grid grid-cols-2 gap-6 p-5 bg-gray-50/50 rounded-2xl border border-gray-100/50">
@@ -79,10 +93,10 @@ const WorkshopInscriptionsList: FC<WorkshopInscriptionsListProps> = ({
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                  <HiCurrencyDollar className="w-3 h-3" /> Pagado
+                  <HiCurrencyDollar className="w-3 h-3" /> Pagado Ciclo
                 </p>
                 <p className="text-sm font-black text-emerald-600 tracking-tighter">
-                  {formatCurrency(totalPaid)}
+                  {formatCurrency(paidInCycle)}
                 </p>
               </div>
               {balance > 0 && (
@@ -96,29 +110,12 @@ const WorkshopInscriptionsList: FC<WorkshopInscriptionsListProps> = ({
             </div>
 
             <div className="flex gap-3">
-              {inv.paymentStatus === 'paid' ? (
-                <button 
-                  onClick={() => handlePaymentStatusUpdate(inv._id, 'pending')} 
-                  className="flex-1 bg-white border border-gray-200 text-gray-400 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all"
-                >
-                  <HiReply className="w-4 h-4" />
-                  Revertir
-                </button>
-              ) : (
-                <button 
-                  onClick={() => handlePaymentStatusUpdate(inv._id, 'paid')} 
-                  className="flex-1 bg-emerald-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 active:scale-95 transition-all"
-                >
-                  <HiCheckCircle className="w-4 h-4" />
-                  Pagado
-                </button>
-              )}
               <button 
-                onClick={() => onDepositClick(inv)} 
-                className="flex-1 bg-indigo-50 text-indigo-700 border border-indigo-100 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all"
+                onClick={() => onManagePaymentClick(inv)} 
+                className="flex-1 bg-indigo-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 active:scale-95 transition-all"
               >
                 <HiCurrencyDollar className="w-4 h-4" />
-                Seña
+                Gestionar Pago
               </button>
               <button 
                 onClick={() => onDeleteClick(inv._id, `${inv.nombre} ${inv.apellido}`)} 

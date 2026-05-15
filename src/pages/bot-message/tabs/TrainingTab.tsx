@@ -4,6 +4,7 @@ import { botInstructionService } from '../../../services/bot-instruction/botInst
 import InstructionCard from '../components/InstructionCard';
 import InstructionModal from '../components/InstructionModal';
 import { FaPlus, FaLightbulb, FaExclamationTriangle } from 'react-icons/fa';
+import { notify } from '../../../components/shared/Toast';
 
 const TrainingTab: React.FC = () => {
   const [instructions, setInstructions] = useState<BotInstruction[]>([]);
@@ -34,13 +35,15 @@ const TrainingTab: React.FC = () => {
     try {
       if (editingInstruction) {
         await botInstructionService.updateInstruction(editingInstruction._id, data);
+        notify.success("Instrucción actualizada");
       } else {
         await botInstructionService.createInstruction(data);
+        notify.success("Nueva instrucción creada");
       }
       await loadInstructions();
       setIsModalOpen(false);
     } catch (error) {
-      alert("Error al guardar la instrucción");
+      notify.error("Error al guardar la instrucción");
     } finally {
       setModalLoading(false);
     }
@@ -51,8 +54,9 @@ const TrainingTab: React.FC = () => {
     try {
       await botInstructionService.deleteInstruction(id);
       await loadInstructions();
+      notify.success("Sección eliminada");
     } catch (error) {
-      alert("Error al eliminar");
+      notify.error("Error al eliminar");
     }
   };
 

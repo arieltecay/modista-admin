@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as chatService from '../../../services/chatService';
 import { FaPlus, FaSync, FaTrash, FaCheckCircle, FaClock, FaTimesCircle, FaWhatsapp, FaPaperPlane } from 'react-icons/fa';
 import GlobalModal from '../../../components/shared/GlobalModal';
+import { notify } from '../../../components/shared/Toast';
 
 const TemplatesTab: React.FC = () => {
   const [templates, setTemplates] = useState<any[]>([]);
@@ -34,9 +35,10 @@ const TemplatesTab: React.FC = () => {
     if (!window.confirm(`¿Estás seguro de eliminar la plantilla "${name}" de Meta?`)) return;
     try {
       await chatService.deleteTemplate(name);
+      notify.success("Plantilla eliminada");
       loadTemplates();
     } catch (err) {
-      alert("Error al eliminar la plantilla");
+      notify.error("Error al eliminar la plantilla");
     }
   };
 
@@ -60,9 +62,9 @@ const TemplatesTab: React.FC = () => {
       setIsModalOpen(false);
       setNewTemplate({ name: '', category: 'UTILITY', language: 'es_AR', body: '' });
       loadTemplates();
-      alert("Plantilla enviada a revisión en Meta.");
+      notify.success("Plantilla enviada a revisión en Meta.");
     } catch (err: any) {
-      alert(err.message || "Error al crear la plantilla");
+      notify.error(err.message || "Error al crear la plantilla");
     }
   };
 
@@ -77,9 +79,9 @@ const TemplatesTab: React.FC = () => {
         languageCode: tpl.language, // Enviamos el idioma real de la plantilla
         components: [] // hello_world no requiere componentes, para otras se puede mejorar
       });
-      alert("¡Prueba enviada con éxito!");
+      notify.success("¡Prueba enviada con éxito!");
     } catch (err: any) {
-      alert("Error al enviar la prueba");
+      notify.error("Error al enviar la prueba");
     }
   };
 

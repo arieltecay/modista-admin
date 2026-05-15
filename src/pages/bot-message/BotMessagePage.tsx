@@ -6,6 +6,9 @@ import ConversationsTab from './tabs/ConversationsTab';
 import TrainingTab from './tabs/TrainingTab';
 import TemplatesTab from './tabs/TemplatesTab';
 import GlobalModal from '../../components/shared/GlobalModal';
+import FAQModal from './components/FAQModal';
+import { FAQFormData } from '../faq/types';
+import { notify } from '../../components/shared/Toast';
 
 type TabType = 'conversations' | 'training' | 'templates';
 
@@ -23,6 +26,8 @@ const BotMessagePage: React.FC = () => {
   // Modal State
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isDeleteMsgModalOpen, setIsDeleteMsgModalOpen] = useState(false);
+  const [isFAQModalOpen, setIsFAQModalOpen] = useState(false);
+  const [faqInitialText, setFaqInitialText] = useState('');
   const [msgToDelete, setMsgToDelete] = useState<string | null>(null);
 
   const scrollToBottom = () => {
@@ -71,29 +76,27 @@ const BotMessagePage: React.FC = () => {
       const data = await chatService.getMessages(selectedChat._id.platform, selectedChat._id.platform_id);
       setMessages(Array.isArray(data) ? data : []);
     } catch (err) {
-      alert("No se pudo enviar el mensaje");
+      notify.error("No se pudo enviar el mensaje");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleConvertToFAQ = async (text: string) => {
-    const question = window.prompt("Escribe la pregunta para esta FAQ:", text);
-    if (!question) return;
-    const answer = window.prompt("Escribe la respuesta oficial:");
-    if (!answer) return;
+  const handleConvertToFAQ = (text: string) => {
+    setFaqInitialText(text);
+    setIsFAQModalOpen(true);
+  };
 
+  const handleSubmitFAQ = async (data: FAQFormData) => {
+    setLoading(true);
     try {
-      await faqService.createFAQ({
-        question,
-        answer,
-        category: 'general',
-        status: 'active',
-        order: 0
-      });
-      alert("Mila ha aprendido algo nuevo.");
+      await faqService.createFAQ(data);
+      notify.success("Mila ha aprendido algo nuevo.");
+      setIsFAQModalOpen(false);
     } catch (err) {
-      alert("Error al crear la FAQ");
+      notify.error("Error al crear la FAQ");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,8 +108,9 @@ const BotMessagePage: React.FC = () => {
       setMessages([]);
       setIsClearModalOpen(false);
       loadChats();
+      notify.success("Historial limpiado correctamente");
     } catch (err) {
-      alert("Error al limpiar el historial");
+      notify.error("Error al limpiar el historial");
     } finally {
       setLoading(false);
     }
@@ -120,8 +124,9 @@ const BotMessagePage: React.FC = () => {
       setMessages(prev => prev.filter(m => m._id !== msgToDelete));
       setIsDeleteMsgModalOpen(false);
       setMsgToDelete(null);
+      notify.success("Mensaje eliminado");
     } catch (err) {
-      alert("Error al eliminar el mensaje");
+      notify.error("Error al eliminar el mensaje");
     } finally {
       setLoading(false);
     }
@@ -250,6 +255,15 @@ const BotMessagePage: React.FC = () => {
           ¿Estás seguro de que quieres eliminar este mensaje? Esta acción es permanente.
         </p>
       </GlobalModal>
+
+      {/* FAQ Modal */}
+      <FAQModal 
+        isOpen={isFAQModalOpen}
+        onClose={() => setIsFAQModalOpen(false)}
+        onSubmit={handleSubmitFAQ}
+        initialQuestion={faqInitialText}
+        loading={loading}
+      />
     </div>
   );
 };

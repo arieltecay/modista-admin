@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout/AdminLayout';
 
@@ -33,7 +34,8 @@ const LoadingFallback = () => (
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <NotificationProvider>
+        <Router>
         <Toaster />
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
@@ -72,6 +74,7 @@ function App() {
           </Routes>
         </Suspense>
       </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

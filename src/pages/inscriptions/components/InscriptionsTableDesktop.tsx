@@ -2,6 +2,7 @@ import React from 'react';
 import Spinner from '../../../components/shared/Spinner';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import { SortableHeaderProps, InscriptionsTableDesktopProps, TurnoData } from './types';
+import { formatDateTime } from '@/utils/date-utils';
 
 const SortableHeader: React.FC<SortableHeaderProps> = ({ children, name, sortConfig, onSort }) => {
   const isSorted = sortConfig.key === name;
@@ -151,9 +152,12 @@ const InscriptionsTableDesktop: React.FC<InscriptionsTableDesktopProps> = ({
                   </div>
                 </td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">
-                    {new Date(inscription.fechaInscripcion).toLocaleDateString('es-AR')}
-                  </p>
+                  <div className="text-gray-900 whitespace-no-wrap">
+                    <p>{formatDateTime(inscription.fechaInscripcion).date}</p>
+                    <p className="text-[10px] text-gray-400 font-medium">
+                      {formatDateTime(inscription.fechaInscripcion).time}
+                    </p>
+                  </div>
                 </td>
               </tr>
             ))}

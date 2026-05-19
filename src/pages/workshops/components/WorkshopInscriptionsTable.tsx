@@ -1,7 +1,8 @@
 import type { FC } from 'react';
 import Spinner from '@/components/shared/Spinner';
-import { HiArrowUp, HiArrowDown, HiCheckCircle, HiClock, HiCurrencyDollar, HiReply, HiTrash } from 'react-icons/hi';
+import { HiArrowUp, HiArrowDown, HiClock, HiCurrencyDollar, HiTrash } from 'react-icons/hi';
 import type { WorkshopInscription, WorkshopSortConfig, Turno } from '../types';
+import { formatDateTime } from '@/utils/date-utils';
 
 interface WorkshopInscriptionsTableProps {
   inscriptions: WorkshopInscription[];
@@ -31,10 +32,6 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   const getSortIcon = (key: string) => {
@@ -115,8 +112,15 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
                   <div className="text-xs text-gray-600 font-bold">{inv.email}</div>
                   <div className="text-[10px] text-gray-400 mt-1 font-medium">{inv.celular}</div>
                 </td>
-                <td className="px-8 py-6 whitespace-nowrap text-xs font-bold text-gray-400">
-                  {formatDate(inv.fechaInscripcion)}
+                <td className="px-8 py-6 whitespace-nowrap">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-gray-400">
+                      {formatDateTime(inv.fechaInscripcion).date}
+                    </span>
+                    <span className="text-[10px] font-medium text-gray-300">
+                      {formatDateTime(inv.fechaInscripcion).time}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-8 py-6 whitespace-nowrap">
                   <div className="text-xs text-indigo-600 font-black bg-indigo-50 px-2.5 py-1 rounded-lg inline-block border border-indigo-100/50 uppercase tracking-tighter">

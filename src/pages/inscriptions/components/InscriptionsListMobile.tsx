@@ -1,6 +1,7 @@
 import React from 'react';
 import Spinner from '../../../components/shared/Spinner';
 import { TurnoData, InscriptionsListMobileProps } from './types';
+import { formatDateTime } from '@/utils/date-utils';
 
 const InscriptionsListMobile: React.FC<InscriptionsListMobileProps> = ({
   inscriptions,
@@ -28,7 +29,7 @@ const InscriptionsListMobile: React.FC<InscriptionsListMobileProps> = ({
                 </p>
               )}
             </div>
-            <span className="text-xs text-gray-600 whitespace-nowrap">{new Date(inscription.fechaInscripcion).toLocaleDateString('es-AR')}</span>
+            <span className="text-xs text-gray-600 whitespace-nowrap">{formatDateTime(inscription.fechaInscripcion).full}</span>
           </div>
           <p className="text-sm text-gray-500 break-all">{inscription.email}</p>
           <p className="text-sm text-gray-500">{inscription.celular}</p>

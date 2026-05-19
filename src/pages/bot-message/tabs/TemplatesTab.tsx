@@ -72,12 +72,28 @@ const TemplatesTab: React.FC = () => {
     const to = window.prompt("Ingresa el número de teléfono para la prueba (con código de país, ej: 549...)");
     if (!to) return;
 
+    // Lógica para rellenar variables si es la plantilla de confirmación de pago
+    let components: any[] = [];
+    if (tpl.name === 'confirmacion_pago_utilidad') {
+      components = [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: 'Alumno de Prueba' }, // {{nombre_alumno}}
+            { type: 'text', text: 'Curso de Prueba' },  // {{nombre_curso}}
+            { type: 'text', text: '0000003100069944243193' }, // {{cvu}}
+            { type: 'text', text: 'mica.menta' }        // {{alias}}
+          ]
+        }
+      ];
+    }
+
     try {
       await chatService.sendTestTemplate({
         to,
         templateName: tpl.name,
-        languageCode: tpl.language, // Enviamos el idioma real de la plantilla
-        components: [] // hello_world no requiere componentes, para otras se puede mejorar
+        languageCode: tpl.language,
+        components
       });
       notify.success("¡Prueba enviada con éxito!");
     } catch (err: any) {

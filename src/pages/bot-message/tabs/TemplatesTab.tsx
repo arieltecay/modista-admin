@@ -79,10 +79,10 @@ const TemplatesTab: React.FC = () => {
         {
           type: 'body',
           parameters: [
-            { type: 'text', text: 'Alumno de Prueba' }, // {{nombre_alumno}}
-            { type: 'text', text: 'Curso de Prueba' },  // {{nombre_curso}}
-            { type: 'text', text: '0000003100069944243193' }, // {{cvu}}
-            { type: 'text', text: 'mica.menta' }        // {{alias}}
+            { type: 'text', parameter_name: 'nombre_alumno', text: 'Alumno de Prueba' },
+            { type: 'text', parameter_name: 'nombre_curso', text: 'Curso de Prueba' },
+            { type: 'text', parameter_name: 'cvu', text: '0000003100069944243193' },
+            { type: 'text', parameter_name: 'alias', text: 'mica.menta' }
           ]
         }
       ];

@@ -150,7 +150,7 @@ const BotMessagePage: React.FC = () => {
       </div>
 
       {/* Tabs Selector */}
-      <div className="flex gap-2 mb-6 bg-white p-1 rounded-2xl shadow-sm border w-fit">
+      <div className="flex gap-2 mb-6 bg-white p-1 rounded-2xl shadow-sm border overflow-x-auto md:overflow-visible md:w-fit">
         <button 
           onClick={() => setActiveTab('conversations')}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition-all ${activeTab === 'conversations' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
@@ -173,7 +173,7 @@ const BotMessagePage: React.FC = () => {
       
       {/* Content Area */}
       <div className="flex-1 min-h-0">
-        <div className="h-[calc(100vh-220px)] lg:h-[calc(100vh-200px)]">
+        <div className="h-full">
           {activeTab === 'conversations' ? (
             <ConversationsTab 
               chats={chats}

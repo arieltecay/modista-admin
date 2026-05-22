@@ -1,5 +1,5 @@
-import React from 'react';
-import { FaPaperPlane, FaRobot, FaUserEdit, FaTrash } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaPaperPlane, FaRobot, FaUserEdit, FaTrash, FaArrowLeft } from 'react-icons/fa';
 
 interface ConversationsTabProps {
   chats: any[];
@@ -30,16 +30,18 @@ const ConversationsTab: React.FC<ConversationsTabProps> = ({
   onClearChat,
   messagesEndRef
 }) => {
+  const [showChatList, setShowChatList] = useState(true);
+
   return (
     <div className="flex gap-6 h-full">
       {/* Sidebar de Chats */}
-      <div className="w-1/3 bg-white border rounded-xl shadow-sm overflow-hidden flex flex-col">
+      <div className={`${showChatList ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-1/3 bg-white border rounded-xl shadow-sm overflow-hidden`}>
         <div className="p-4 border-b bg-gray-50 font-semibold text-gray-700">Conversaciones Recientes</div>
         <div className="flex-1 overflow-y-auto">
           {chats.map((chat: any) => (
             <div 
               key={`${chat._id.platform}-${chat._id.platform_id}`}
-              onClick={() => onSelectChat(chat)}
+              onClick={() => { onSelectChat(chat); setShowChatList(false); }}
               className={`p-4 border-b cursor-pointer transition-colors hover:bg-indigo-50 ${selectedChat?._id.platform_id === chat._id.platform_id ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : ''}`}
             >
               <div className="flex justify-between items-start mb-1">
@@ -53,13 +55,18 @@ const ConversationsTab: React.FC<ConversationsTabProps> = ({
       </div>
 
       {/* Panel de mensajes */}
-      <div className="w-2/3 bg-white border rounded-xl shadow-sm flex flex-col overflow-hidden">
+      <div className={`${showChatList ? 'hidden' : 'flex'} md:flex flex-col w-full md:w-2/3 bg-white border rounded-xl shadow-sm overflow-hidden`}>
         {selectedChat ? (
           <>
             <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-              <div className="flex flex-col">
-                <h2 className="font-bold text-gray-800">Chat con {selectedChat._id.platform_id}</h2>
-                <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">WhatsApp Oficial</span>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowChatList(true)} className="md:hidden p-2 -ml-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                  <FaArrowLeft size={16} />
+                </button>
+                <div className="flex flex-col">
+                  <h2 className="font-bold text-gray-800">Chat con {selectedChat._id.platform_id}</h2>
+                  <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">WhatsApp Oficial</span>
+                </div>
               </div>
               <button 
                 onClick={onClearChat}

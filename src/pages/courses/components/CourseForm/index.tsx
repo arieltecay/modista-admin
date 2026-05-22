@@ -116,6 +116,13 @@ const CourseForm: React.FC<CourseFormProps> = ({ initialData = {}, onSubmit, isE
           )} />
         </div>
 
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 text-blue-600">Link de Pago MercadoPago</label>
+          <Controller name="mpPaymentLink" control={control} render={({ field }) => (
+            <input {...field} className="w-full bg-blue-50 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 font-medium" placeholder="https://mpago.la/..." />
+          )} />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-50">
           <label className="flex items-center gap-3 cursor-pointer group">
             <Controller name="isPresencial" control={control} render={({ field }) => (

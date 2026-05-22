@@ -13,6 +13,7 @@ export interface Course {
     image?: string;
     deeplink?: string;
     coursePaid?: string;
+    mpPaymentLink?: string;
     category?: string;
     shortDescription?: string;
     imageUrl?: string;
@@ -43,6 +44,7 @@ export interface CreateCourseData {
     image?: string;
     deeplink?: string;
     coursePaid?: string;
+    mpPaymentLink?: string;
     shortDescription?: string;
 }
 

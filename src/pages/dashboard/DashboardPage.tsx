@@ -266,26 +266,6 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Looker Studio Iframe Section */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-50">
-          <h2 className="text-xl font-bold text-slate-800">Analítica de Tráfico (Google Looker Studio)</h2>
-          <p className="text-xs text-slate-500 mt-1">Reporte detallado de comportamiento y velocidad del sitio.</p>
-        </div>
-        <div className="aspect-video w-full bg-slate-50 flex items-center justify-center">
-          {/* Aquí el usuario puede insertar su URL de Looker Studio */}
-          <div className="text-center p-12">
-            <ChartBarIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-400 max-w-sm mx-auto">
-              Conecta tu reporte de Looker Studio aquí para ver métricas de GA4 (LCP, CLS, UX) integradas.
-            </p>
-            <button className="mt-4 px-6 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold">
-              Configurar Reporte
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

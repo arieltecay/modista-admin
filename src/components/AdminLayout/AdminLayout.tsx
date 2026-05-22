@@ -37,8 +37,8 @@ export const AdminLayout: React.FC = () => {
             >
               <Bars3Icon className="w-6 h-6" />
             </button>
-            <span className="hidden lg:block text-xl font-bold text-slate-800">Panel de Gestión</span>
-            <span className="lg:hidden ml-4 text-lg font-bold text-indigo-600">MODISTA ADMIN</span>
+            <span onClick={() => navigate('/admin/dashboard')} className="hidden lg:block text-xl font-bold text-slate-800 cursor-pointer hover:text-indigo-600 transition-colors">Panel de Gestión</span>
+            <span onClick={() => navigate('/admin/dashboard')} className="lg:hidden ml-4 text-lg font-bold text-indigo-600 cursor-pointer hover:text-indigo-800 transition-colors">MODISTA ADMIN</span>
           </div>
 
           <div className="flex items-center gap-4">

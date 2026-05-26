@@ -57,11 +57,13 @@ const DashboardPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [trafficStartDate, setTrafficStartDate] = useState(startDate);
+  const [trafficEndDate, setTrafficEndDate] = useState(endDate);
 
   const fetchTraffic = useCallback(async (showLoader = true) => {
     if (showLoader) setIsRefreshingTraffic(true);
     try {
-      const params = { startDate, endDate };
+      const params = { startDate: trafficStartDate, endDate: trafficEndDate };
       const data = await getTrafficData(params);
       setTraffic(data);
     } catch (err) {
@@ -69,7 +71,7 @@ const DashboardPage: React.FC = () => {
     } finally {
       if (showLoader) setIsRefreshingTraffic(false);
     }
-  }, [startDate, endDate]);
+  }, [trafficStartDate, trafficEndDate]);
 
   const handleCsvImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -214,12 +216,28 @@ const DashboardPage: React.FC = () => {
             <GlobeAltIcon className="w-6 h-6 text-indigo-500" />
             <h2 className="text-xl font-bold text-slate-800">Tráfico de la Web</h2>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             {traffic?.lastUpdated && (
               <span className="text-xs text-slate-400">
                 Últ. actualización: {new Date(traffic.lastUpdated).toLocaleTimeString()}
               </span>
             )}
+            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+              <CalendarIcon className="w-4 h-4 text-slate-400 ml-1" />
+              <input
+                type="date"
+                value={trafficStartDate}
+                onChange={(e) => setTrafficStartDate(e.target.value)}
+                className="text-xs font-medium text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer w-28"
+              />
+              <span className="text-slate-300 text-xs">|</span>
+              <input
+                type="date"
+                value={trafficEndDate}
+                onChange={(e) => setTrafficEndDate(e.target.value)}
+                className="text-xs font-medium text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer w-28"
+              />
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -231,13 +249,13 @@ const DashboardPage: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => fileInputRef.current?.click()}
               disabled={isImporting}
-              className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50 relative"
+              className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
               title="Importar CSV de GA4"
             >
               {isImporting ? (
-                <ArrowPathIcon className="w-5 h-5 text-indigo-500 animate-spin" />
+                <ArrowPathIcon className="w-4 h-4 text-indigo-500 animate-spin" />
               ) : (
-                <DocumentArrowUpIcon className="w-5 h-5 text-indigo-500" />
+                <DocumentArrowUpIcon className="w-4 h-4 text-indigo-500" />
               )}
             </motion.button>
             <motion.button
@@ -246,7 +264,7 @@ const DashboardPage: React.FC = () => {
               disabled={isRefreshingTraffic}
               className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
             >
-              <ArrowPathIcon className={`w-5 h-5 text-slate-500 ${isRefreshingTraffic ? 'animate-spin' : ''}`} />
+              <ArrowPathIcon className={`w-4 h-4 text-slate-500 ${isRefreshingTraffic ? 'animate-spin' : ''}`} />
             </motion.button>
           </div>
         </div>

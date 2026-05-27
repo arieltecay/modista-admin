@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient } from '../../services/config/apiClient';
-import { 
-  CurrencyDollarIcon, 
-  UserGroupIcon, 
-  ChartBarIcon, 
+import {
+  CurrencyDollarIcon,
+  UserGroupIcon,
+  ChartBarIcon,
   ArrowTrendingUpIcon,
   CalendarIcon,
   ChatBubbleBottomCenterTextIcon,
@@ -128,31 +128,31 @@ const DashboardPage: React.FC = () => {
   }, [fetchData]);
 
   const kpis = [
-    { 
-      label: 'Ingresos Totales', 
-      value: `$${stats?.totalRevenue.toLocaleString() || 0}`, 
-      icon: CurrencyDollarIcon, 
+    {
+      label: 'Ingresos Totales',
+      value: `$${stats?.totalRevenue.toLocaleString() || 0}`,
+      icon: CurrencyDollarIcon,
       color: 'bg-emerald-50 text-emerald-600',
       description: 'Basado en pagos reales'
     },
-    { 
-      label: 'Inscripciones', 
-      value: stats?.totalInscriptions || 0, 
-      icon: UserGroupIcon, 
+    {
+      label: 'Inscripciones',
+      value: stats?.totalInscriptions || 0,
+      icon: UserGroupIcon,
       color: 'bg-blue-50 text-blue-600',
       description: 'Total de leads registrados'
     },
-    { 
-      label: 'Tasa de Conversión', 
-      value: stats ? `${((stats.paidInscriptions / stats.totalInscriptions) * 100).toFixed(1)}%` : '0%', 
-      icon: ArrowTrendingUpIcon, 
+    {
+      label: 'Tasa de Conversión',
+      value: stats ? `${((stats.paidInscriptions / stats.totalInscriptions) * 100).toFixed(1)}%` : '0%',
+      icon: ArrowTrendingUpIcon,
       color: 'bg-amber-50 text-amber-600',
       description: 'Leads que pagaron el total'
     },
-    { 
-      label: 'Origen Paid (IG)', 
-      value: stats?.attribution.paidAds || 0, 
-      icon: ChartBarIcon, 
+    {
+      label: 'Origen Paid (IG)',
+      value: stats?.attribution.paidAds || 0,
+      icon: ChartBarIcon,
       color: 'bg-purple-50 text-purple-600',
       description: 'Ventas atribuidas a Ads'
     },
@@ -166,19 +166,19 @@ const DashboardPage: React.FC = () => {
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard General</h1>
           <p className="text-slate-500 mt-1">Resumen dinámico del rendimiento de tu academia.</p>
         </div>
-        
+
         <div className="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
           <CalendarIcon className="w-5 h-5 text-slate-400 ml-2" />
-          <input 
-            type="date" 
-            value={startDate} 
+          <input
+            type="date"
+            value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             className="text-sm font-medium text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer"
           />
           <span className="text-slate-300">|</span>
-          <input 
-            type="date" 
-            value={endDate} 
+          <input
+            type="date"
+            value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             className="text-sm font-medium text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer"
           />
@@ -207,6 +207,112 @@ const DashboardPage: React.FC = () => {
             </div>
           </motion.div>
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Course Performance Table */}
+        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-slate-800">Cursos más Vendidos</h2>
+            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase">Top Performance</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Nombre del Curso</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-center">Inscriptos</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-center">Pagados</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">Efectividad</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {performance.map((course) => (
+                  <tr key={course._id} className="hover:bg-slate-50/30 transition-colors">
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-slate-800">{course.courseTitle}</p>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-slate-600 font-medium">{course.totalInscribed}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                        {course.paidInscribed}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                          <div
+                            className="bg-indigo-500 h-full"
+                            style={{ width: `${(course.paidInscribed / course.totalInscribed) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-slate-700">
+                          {((course.paidInscribed / course.totalInscribed) * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {performance.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">No hay datos para este período</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Meta WhatsApp Insights */}
+        <div className="bg-slate-900 rounded-3xl shadow-xl p-6 text-white flex flex-col">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <ChatBubbleBottomCenterTextIcon className="w-5 h-5 text-indigo-400" />
+              Insights de Meta
+            </h2>
+            <div className="px-2 py-1 bg-white/10 rounded-lg text-[10px] font-bold uppercase tracking-wider">WhatsApp API</div>
+          </div>
+
+          <div className="space-y-6 flex-1">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                <p className="text-xs text-slate-400 mb-1">Inversión</p>
+                <p className="text-xl font-black">{metaStats?.spent} {metaStats?.currency}</p>
+              </div>
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                <p className="text-xs text-slate-400 mb-1">Costo p/msj</p>
+                <p className="text-xl font-black">{metaStats?.costPerMessage} {metaStats?.currency}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4">
+              {[
+                { label: 'Enviados', value: metaStats?.sent, icon: PaperAirplaneIcon, color: 'text-indigo-400' },
+                { label: 'Entregados', value: metaStats?.delivered, icon: ChartBarIcon, color: 'text-blue-400' },
+                { label: 'Leídos', value: metaStats?.read, icon: EyeIcon, color: 'text-emerald-400' },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between group">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-white/5 group-hover:bg-white/10 transition-colors">
+                      <item.icon className={`w-4 h-4 ${item.color}`} />
+                    </div>
+                    <span className="text-sm font-medium text-slate-300">{item.label}</span>
+                  </div>
+                  <span className="font-bold text-lg">{item.value || 0}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <p className="text-[10px] text-slate-500 text-center leading-tight">
+              Datos obtenidos directamente desde la API Cloud de Meta. <br />
+              Actualizado en tiempo real.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Traffic Section */}
@@ -352,112 +458,6 @@ const DashboardPage: React.FC = () => {
               Cargando datos de tráfico...
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Course Performance Table */}
-        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-slate-800">Cursos más Vendidos</h2>
-            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase">Top Performance</span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Nombre del Curso</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-center">Inscriptos</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-center">Pagados</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">Efectividad</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {performance.map((course) => (
-                  <tr key={course._id} className="hover:bg-slate-50/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-slate-800">{course.courseTitle}</p>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="text-slate-600 font-medium">{course.totalInscribed}</span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-                        {course.paidInscribed}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                          <div 
-                            className="bg-indigo-500 h-full" 
-                            style={{ width: `${(course.paidInscribed / course.totalInscribed) * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-bold text-slate-700">
-                          {((course.paidInscribed / course.totalInscribed) * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {performance.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">No hay datos para este período</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Meta WhatsApp Insights */}
-        <div className="bg-slate-900 rounded-3xl shadow-xl p-6 text-white flex flex-col">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <ChatBubbleBottomCenterTextIcon className="w-5 h-5 text-indigo-400" />
-              Insights de Meta
-            </h2>
-            <div className="px-2 py-1 bg-white/10 rounded-lg text-[10px] font-bold uppercase tracking-wider">WhatsApp API</div>
-          </div>
-
-          <div className="space-y-6 flex-1">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                <p className="text-xs text-slate-400 mb-1">Inversión</p>
-                <p className="text-xl font-black">{metaStats?.spent} {metaStats?.currency}</p>
-              </div>
-              <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                <p className="text-xs text-slate-400 mb-1">Costo p/msj</p>
-                <p className="text-xl font-black">{metaStats?.costPerMessage} {metaStats?.currency}</p>
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-4">
-              {[
-                { label: 'Enviados', value: metaStats?.sent, icon: PaperAirplaneIcon, color: 'text-indigo-400' },
-                { label: 'Entregados', value: metaStats?.delivered, icon: ChartBarIcon, color: 'text-blue-400' },
-                { label: 'Leídos', value: metaStats?.read, icon: EyeIcon, color: 'text-emerald-400' },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-white/5 group-hover:bg-white/10 transition-colors">
-                      <item.icon className={`w-4 h-4 ${item.color}`} />
-                    </div>
-                    <span className="text-sm font-medium text-slate-300">{item.label}</span>
-                  </div>
-                  <span className="font-bold text-lg">{item.value || 0}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-white/10">
-            <p className="text-[10px] text-slate-500 text-center leading-tight">
-              Datos obtenidos directamente desde la API Cloud de Meta. <br/>
-              Actualizado en tiempo real.
-            </p>
-          </div>
         </div>
       </div>
     </div>

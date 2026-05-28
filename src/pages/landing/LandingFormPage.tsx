@@ -206,7 +206,7 @@ const LandingFormPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-12 text-[10px] text-gray-300 font-bold uppercase tracking-widest">
+              <div className="mt-12 text-[10px] text-gray-300 font-bold uppercase tracking-widest text-center">
                 &copy; {new Date().getFullYear()} Modista App
               </div>
             </div>

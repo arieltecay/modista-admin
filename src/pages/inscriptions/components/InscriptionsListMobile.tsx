@@ -33,6 +33,19 @@ const InscriptionsListMobile: React.FC<InscriptionsListMobileProps> = ({
           </div>
           <p className="text-sm text-gray-500 break-all">{inscription.email}</p>
           <p className="text-sm text-gray-500">{inscription.celular}</p>
+          <div className="flex flex-wrap gap-1 mt-2">
+            <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-tighter border ${inscription.sourceType === 'landing'
+              ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+              : 'bg-gray-50 text-gray-500 border-gray-200'
+              }`}>
+              {inscription.sourceType === 'landing' ? '🚀 Landing' : '📱 App'}
+            </span>
+            {inscription.marketingSource && (
+              <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded uppercase tracking-tighter">
+                📣 {inscription.marketingSource}
+              </span>
+            )}
+          </div>
           <div className="mt-3 flex justify-between items-end">
             <div>
               {!hideCourseTitle && <p className="text-sm font-medium text-gray-700 mb-1">{inscription.courseTitle || 'N/A'}</p>}

@@ -68,18 +68,18 @@ const InscriptionsTableDesktop: React.FC<InscriptionsTableDesktopProps> = ({
                   <p className="text-gray-900 font-bold leading-tight">{inscription.nombre}</p>
                   <p className="text-gray-500 text-[11px]">{inscription.apellido}</p>
                 </td>
-                <td className="px-4 py-4 text-[11px] max-w-[150px]">
+                <td className="px-4 py-4 text-[10px] max-w-[120px]">
                   <p className="text-gray-600 break-all font-medium leading-tight">{inscription.email}</p>
                 </td>
                 <td className="px-4 py-4 text-sm">
-                  <p className="text-gray-900 font-mono text-[12px]">{inscription.celular}</p>
+                  <p className="text-gray-900 font-mono text-[11px] whitespace-nowrap">{inscription.celular}</p>
                 </td>
                 {!hideCourseTitle && (
-                  <td className="px-4 py-4 text-sm max-w-[150px]">
-                    <p className="text-gray-800 font-bold text-[11px] leading-tight uppercase">{inscription.courseTitle || 'N/A'}</p>
+                  <td className="px-4 py-4 text-sm max-w-[140px]">
+                    <p className="text-gray-800 font-bold text-[10px] leading-tight uppercase line-clamp-2">{inscription.courseTitle || 'N/A'}</p>
                   </td>
                 )}
-                <td className="px-4 py-4 text-sm font-mono font-bold text-gray-900">
+                <td className="px-4 py-4 text-sm font-mono font-bold text-gray-900 whitespace-nowrap">
                   ${inscription.coursePrice || 0}
                 </td>
                 {showDepositFeature && (
@@ -97,7 +97,7 @@ const InscriptionsTableDesktop: React.FC<InscriptionsTableDesktopProps> = ({
                   </td>
                 )}
                 <td className="px-4 py-4 text-sm whitespace-nowrap">
-                  <span className={`px-2 py-0.5 text-[9px] font-black rounded-full uppercase tracking-tighter border ${inscription.paymentStatus === 'paid'
+                  <span className={`inline-flex items-center px-2 py-0.5 text-[9px] font-black rounded-full uppercase tracking-tighter border ${inscription.paymentStatus === 'paid'
                     ? 'bg-green-50 text-green-700 border-green-200'
                     : 'bg-yellow-50 text-yellow-700 border-yellow-200'
                     }`}>
@@ -105,7 +105,7 @@ const InscriptionsTableDesktop: React.FC<InscriptionsTableDesktopProps> = ({
                   </span>
                 </td>
                 <td className="px-4 py-4 text-sm whitespace-nowrap">
-                  <span className={`px-2 py-0.5 text-[9px] font-black rounded uppercase tracking-tighter border ${inscription.sourceType === 'landing'
+                  <span className={`inline-flex items-center px-2 py-0.5 text-[9px] font-black rounded uppercase tracking-tighter border ${inscription.sourceType === 'landing'
                     ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
                     : 'bg-gray-50 text-gray-500 border-gray-200'
                     }`}>

@@ -18,6 +18,8 @@ export interface Inscription {
   depositAmount?: number;
   depositDate?: string;
   paymentStatus: 'paid' | 'pending';
+  sourceType?: 'app' | 'landing';
+  marketingSource?: string;
   fechaInscripcion: string;
 }
 

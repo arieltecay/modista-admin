@@ -9,18 +9,20 @@ const SortableHeader: React.FC<SortableHeaderProps> = ({ children, name, sortCon
   const direction = isSorted ? sortConfig.direction : undefined;
 
   const getIcon = () => {
-    if (!isSorted) return <FaSort className="inline ml-1" />;
-    if (direction === 'asc') return <FaSortUp className="inline ml-1" />;
-    return <FaSortDown className="inline ml-1" />;
+    if (!isSorted) return <FaSort className="inline ml-1 opacity-20" />;
+    if (direction === 'asc') return <FaSortUp className="inline ml-1 text-indigo-500" />;
+    return <FaSortDown className="inline ml-1 text-indigo-500" />;
   };
 
   return (
     <th
-      className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer"
+      className="px-4 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-[10px] font-black text-gray-500 uppercase tracking-widest cursor-pointer hover:bg-gray-200 transition-colors"
       onClick={() => onSort(name)}
     >
-      {children}
-      {getIcon()}
+      <div className="flex items-center">
+        {children}
+        {getIcon()}
+      </div>
     </th>
   );
 };
@@ -42,91 +44,97 @@ const InscriptionsTableDesktop: React.FC<InscriptionsTableDesktopProps> = ({
 
   return (
     <div className="-mx-4 sm:-mx-8 px-4 sm:px-8 py-4 overflow-x-auto hidden md:block">
-      <div className="inline-block min-w-full shadow rounded-lg overflow-hidden">
+      <div className="inline-block min-w-full shadow-sm rounded-xl overflow-hidden border border-gray-100">
         <table className="min-w-full leading-normal">
           <thead>
             <tr>
-              <SortableHeader name="nombre" sortConfig={sortConfig} onSort={handleSort}>Nombre Completo</SortableHeader>
+              <SortableHeader name="nombre" sortConfig={sortConfig} onSort={handleSort}>Nombre</SortableHeader>
               <SortableHeader name="email" sortConfig={sortConfig} onSort={handleSort}>Email</SortableHeader>
               <SortableHeader name="celular" sortConfig={sortConfig} onSort={handleSort}>Celular</SortableHeader>
               {!hideCourseTitle && <SortableHeader name="courseTitle" sortConfig={sortConfig} onSort={handleSort}>Taller</SortableHeader>}
-              <SortableHeader name="horario" sortConfig={sortConfig} onSort={handleSort}>Horario</SortableHeader>
               <SortableHeader name="coursePrice" sortConfig={sortConfig} onSort={handleSort}>Precio</SortableHeader>
               {showDepositFeature && <SortableHeader name="depositAmount" sortConfig={sortConfig} onSort={handleSort}>Seña</SortableHeader>}
-              <SortableHeader name="paymentStatus" sortConfig={sortConfig} onSort={handleSort}>Estado Pago</SortableHeader>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
-              <SortableHeader name="fechaInscripcion" sortConfig={sortConfig} onSort={handleSort}>Fecha de Inscripción</SortableHeader>
+              <SortableHeader name="paymentStatus" sortConfig={sortConfig} onSort={handleSort}>Pago</SortableHeader>
+              <SortableHeader name="sourceType" sortConfig={sortConfig} onSort={handleSort}>Origen</SortableHeader>
+              <SortableHeader name="marketingSource" sortConfig={sortConfig} onSort={handleSort}>Campaña</SortableHeader>
+              <th className="px-4 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-[10px] font-black text-gray-500 uppercase tracking-widest">Acciones</th>
+              <SortableHeader name="fechaInscripcion" sortConfig={sortConfig} onSort={handleSort}>Fecha</SortableHeader>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="bg-white divide-y divide-gray-50">
             {inscriptions.map((inscription) => (
-              <tr key={inscription._id}>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">{inscription.nombre} {inscription.apellido}</p>
+              <tr key={inscription._id} className="hover:bg-gray-50/50 transition-colors">
+                <td className="px-4 py-4 text-sm">
+                  <p className="text-gray-900 font-bold leading-tight">{inscription.nombre}</p>
+                  <p className="text-gray-500 text-[11px]">{inscription.apellido}</p>
                 </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">{inscription.email}</p>
+                <td className="px-4 py-4 text-[11px] max-w-[150px]">
+                  <p className="text-gray-600 break-all font-medium leading-tight">{inscription.email}</p>
                 </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">{inscription.celular}</p>
+                <td className="px-4 py-4 text-sm">
+                  <p className="text-gray-900 font-mono text-[12px]">{inscription.celular}</p>
                 </td>
                 {!hideCourseTitle && (
-                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                    <p className="text-gray-900 font-medium">{inscription.courseTitle || 'N/A'}</p>
+                  <td className="px-4 py-4 text-sm max-w-[150px]">
+                    <p className="text-gray-800 font-bold text-[11px] leading-tight uppercase">{inscription.courseTitle || 'N/A'}</p>
                   </td>
                 )}
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  {inscription.turnoId && typeof inscription.turnoId === 'object' ? (
-                    <p className="text-xs text-indigo-600 font-bold bg-indigo-50 inline-block px-1.5 py-0.5 rounded">
-                      {(inscription.turnoId as TurnoData).diaSemana} - {(inscription.turnoId as TurnoData).horaInicio} hs
-                    </p>
-                  ) : (
-                    <span className="text-gray-400 italic">No asignado</span>
-                  )}
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">${inscription.coursePrice || 0}</p>
+                <td className="px-4 py-4 text-sm font-mono font-bold text-gray-900">
+                  ${inscription.coursePrice || 0}
                 </td>
                 {showDepositFeature && (
-                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                  <td className="px-4 py-4 text-sm">
                     {inscription.depositAmount && inscription.depositAmount > 0 ? (
                       <div>
-                        <p className="text-green-600 font-bold whitespace-no-wrap">${inscription.depositAmount}</p>
-                        <p className="text-[10px] text-gray-400">
+                        <p className="text-green-600 font-bold font-mono">${inscription.depositAmount}</p>
+                        <p className="text-[9px] text-gray-400 uppercase">
                           {inscription.depositDate ? new Date(inscription.depositDate).toLocaleDateString() : ''}
                         </p>
                       </div>
                     ) : (
-                      <span className="text-gray-300 italic">Sin seña</span>
+                      <span className="text-gray-200 italic text-[11px]">Sin seña</span>
                     )}
                   </td>
                 )}
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <span className={`px-2 py-1 text-xs rounded-full border ${inscription.paymentStatus === 'paid'
-                    ? 'bg-green-100 text-green-800 border-green-200'
-                    : 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                <td className="px-4 py-4 text-sm whitespace-nowrap">
+                  <span className={`px-2 py-0.5 text-[9px] font-black rounded-full uppercase tracking-tighter border ${inscription.paymentStatus === 'paid'
+                    ? 'bg-green-50 text-green-700 border-green-200'
+                    : 'bg-yellow-50 text-yellow-700 border-yellow-200'
                     }`}>
-                    {inscription.paymentStatus === 'paid' ? '✅ Pagado' : '⏳ Pendiente'}
+                    {inscription.paymentStatus === 'paid' ? 'PAGADO' : 'PENDIENTE'}
                   </span>
                 </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <div className="flex items-center gap-2">
+                <td className="px-4 py-4 text-sm whitespace-nowrap">
+                  <span className={`px-2 py-0.5 text-[9px] font-black rounded uppercase tracking-tighter border ${inscription.sourceType === 'landing'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : 'bg-gray-50 text-gray-500 border-gray-200'
+                    }`}>
+                    {inscription.sourceType === 'landing' ? 'LANDING' : 'APP'}
+                  </span>
+                </td>
+                <td className="px-4 py-4 text-sm whitespace-nowrap">
+                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-tight">
+                    {inscription.marketingSource || '-'}
+                  </span>
+                </td>
+                <td className="px-4 py-4 text-sm">
+                  <div className="flex items-center gap-1.5">
                     {inscription.paymentStatus === 'pending' && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                         <button
                           onClick={() => handlePaymentStatusUpdate(inscription._id, 'paid')}
-                          className="bg-green-500 text-white px-3 py-1 text-xs rounded hover:bg-green-600 transition-colors"
+                          className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 text-[10px] font-black rounded shadow-sm transition-all uppercase"
                           disabled={loading}
                         >
-                          {loading ? '...' : 'Marcar Pagado'}
+                          PAGÓ
                         </button>
                         {showDepositFeature && !(inscription.depositAmount && inscription.depositAmount > 0) && (
                           <button
                             onClick={() => onDepositClick(inscription)}
-                            className="bg-indigo-500 text-white px-3 py-1 text-xs rounded hover:bg-indigo-600 transition-colors"
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 text-[10px] font-black rounded shadow-sm transition-all uppercase"
                             disabled={loading}
                           >
-                            Seña
+                            SEÑA
                           </button>
                         )}
                       </div>
@@ -135,28 +143,26 @@ const InscriptionsTableDesktop: React.FC<InscriptionsTableDesktopProps> = ({
                       <div className="flex gap-1">
                         <button
                           onClick={() => handlePaymentStatusUpdate(inscription._id, 'pending')}
-                          className="bg-gray-500 text-white px-2 py-1 text-xs rounded hover:bg-gray-600 transition-colors"
+                          className="bg-gray-400 hover:bg-gray-500 text-white px-2 py-1 text-[10px] font-black rounded shadow-sm transition-all uppercase"
                           disabled={loading}
                         >
-                          Revertir
+                          REV
                         </button>
                         <button
                           onClick={() => handleSendCourseEmail(inscription)}
-                          className="bg-blue-500 text-white px-2 py-1 text-xs rounded hover:bg-blue-600 transition-colors"
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 text-[10px] font-black rounded shadow-sm transition-all uppercase"
                           disabled={loading}
                         >
-                          {loading ? '...' : 'Enviar Video'}
+                          VIDEO
                         </button>
                       </div>
                     )}
                   </div>
                 </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <div className="text-gray-900 whitespace-no-wrap">
+                <td className="px-4 py-4 text-sm whitespace-nowrap">
+                  <div className="text-gray-500 font-mono text-[10px] leading-tight text-right">
                     <p>{formatDateTime(inscription.fechaInscripcion).date}</p>
-                    <p className="text-[10px] text-gray-400 font-medium">
-                      {formatDateTime(inscription.fechaInscripcion).time}
-                    </p>
+                    <p className="opacity-50">{formatDateTime(inscription.fechaInscripcion).time}</p>
                   </div>
                 </td>
               </tr>

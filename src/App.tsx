@@ -24,6 +24,8 @@ const TestimonialsPage = lazy(() => import('./pages/testimonials/TestimonialsPag
 const BotMessagePage = lazy(() => import('./pages/bot-message/BotMessagePage'));
 const TariffListPage = lazy(() => import('./pages/tariffs/TariffListPage'));
 const TariffFormPage = lazy(() => import('./pages/tariffs/TariffFormPage'));
+const LandingListPage = lazy(() => import('./pages/landing/LandingListPage'));
+const LandingFormPage = lazy(() => import('./pages/landing/LandingFormPage'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -55,6 +57,11 @@ function App() {
                 <Route path="tariffs" element={<TariffListPage />} />
                 <Route path="tariffs/add" element={<TariffFormPage />} />
                 <Route path="tariffs/edit/:id" element={<TariffFormPage />} />
+
+                <Route path="landings" element={<LandingListPage />} />
+                <Route path="landings/add" element={<LandingFormPage />} />
+                <Route path="landings/edit/:id" element={<LandingFormPage />} />
+
                 <Route path="workshops" element={<WorkshopSelectorPage />} />
                 <Route path="workshops/:id" element={<WorkshopInscriptionsPage />} />
                 <Route path="workshops/:id/schedule" element={<WorkshopSchedulePage />} />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { 
   HomeIcon, 
   UsersIcon, 
@@ -12,7 +12,9 @@ import {
   XMarkIcon,
   MagnifyingGlassIcon,
   ChatBubbleLeftRightIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  RocketLaunchIcon,
+  StarIcon // Para testimonios
 } from '@heroicons/react/24/outline';
 import { AdminSidebarProps } from './types';
 import { motion } from 'framer-motion';
@@ -20,12 +22,13 @@ import { motion } from 'framer-motion';
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
   { name: 'Cursos', href: '/admin/courses', icon: BookOpenIcon },
+  { name: 'Campañas (LP)', href: '/admin/landings', icon: RocketLaunchIcon },
   { name: 'Inscripciones', href: '/admin/inscriptions', icon: UsersIcon }, 
   { name: 'Carrusel', href: '/admin/carousel', icon: ViewColumnsIcon },
   { name: 'Talleres', href: '/admin/workshops', icon: CalendarIcon },
   { name: 'Tarifas', href: '/admin/tariffs', icon: CurrencyDollarIcon },
   { name: 'Mensajes', href: '/admin/chat', icon: ChatBubbleLeftRightIcon },
-  { name: 'Testimonios', href: '/admin/testimonials', icon: ChatBubbleLeftRightIcon },
+  { name: 'Testimonios', href: '/admin/testimonials', icon: StarIcon },
   { name: 'Q&A (FAQ)', href: '/admin/faq', icon: QuestionMarkCircleIcon },
 ];
 

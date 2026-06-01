@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as chatService from '../../services/chatService';
 import { faqService } from '../../services/faq/faqService';
-import { FaRobot, FaComments, FaGraduationCap, FaTrash, FaWhatsapp } from 'react-icons/fa';
+import { FaRobot, FaComments, FaGraduationCap, FaTrash, FaWhatsapp, FaInstagram, FaGlobe } from 'react-icons/fa';
 import ConversationsTab from './tabs/ConversationsTab';
 import TrainingTab from './tabs/TrainingTab';
 import TemplatesTab from './tabs/TemplatesTab';
@@ -14,6 +14,7 @@ type TabType = 'conversations' | 'training' | 'templates';
 
 const BotMessagePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('conversations');
+  const [platformFilter, setPlatformFilter] = useState<'all' | 'whatsapp' | 'instagram'>('all');
   
   // State for Chat logic (Shared or scoped to tab)
   const [chats, setChats] = useState<any[]>([]);
@@ -170,13 +171,53 @@ const BotMessagePage: React.FC = () => {
           <FaWhatsapp /> Plantillas
         </button>
       </div>
+
+      {/* Filtro de Plataforma */}
+      {activeTab === 'conversations' && (
+        <div className="flex gap-2 mb-4 bg-white p-1 rounded-xl shadow-sm border w-fit">
+          <button
+            onClick={() => setPlatformFilter('all')}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              platformFilter === 'all'
+                ? 'bg-slate-800 text-white shadow-md'
+                : 'bg-white text-slate-500 hover:bg-slate-50'
+            }`}
+          >
+            <FaGlobe /> Todas
+          </button>
+          <button
+            onClick={() => setPlatformFilter('whatsapp')}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              platformFilter === 'whatsapp'
+                ? 'bg-green-600 text-white shadow-md'
+                : 'bg-white text-slate-500 hover:bg-slate-50'
+            }`}
+          >
+            <FaWhatsapp /> WhatsApp
+          </button>
+          <button
+            onClick={() => setPlatformFilter('instagram')}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              platformFilter === 'instagram'
+                ? 'bg-pink-600 text-white shadow-md'
+                : 'bg-white text-slate-500 hover:bg-slate-50'
+            }`}
+          >
+            <FaInstagram /> Instagram
+          </button>
+        </div>
+      )}
       
       {/* Content Area */}
       <div className="flex-1 min-h-0">
         <div className="h-full">
           {activeTab === 'conversations' ? (
             <ConversationsTab 
-              chats={chats}
+              chats={
+                platformFilter === 'all' 
+                  ? chats 
+                  : chats.filter(c => c._id.platform === platformFilter)
+              }
               selectedChat={selectedChat}
               messages={messages}
               newMessage={newMessage}

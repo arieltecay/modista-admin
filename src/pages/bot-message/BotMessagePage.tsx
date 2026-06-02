@@ -138,6 +138,12 @@ const BotMessagePage: React.FC = () => {
     setIsDeleteMsgModalOpen(true);
   };
 
+  const handlePlatformFilterChange = (filter: 'all' | 'whatsapp' | 'instagram') => {
+    setPlatformFilter(filter);
+    setSelectedChat(null);
+    setMessages([]);
+  };
+
   return (
     <div className="h-[calc(100vh+50px)] flex flex-col overflow-hidden">
       {/* Header */}
@@ -176,7 +182,7 @@ const BotMessagePage: React.FC = () => {
       {activeTab === 'conversations' && (
         <div className="flex gap-2 mb-4 bg-white p-1 rounded-xl shadow-sm border w-fit">
           <button
-            onClick={() => setPlatformFilter('all')}
+            onClick={() => handlePlatformFilterChange('all')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
               platformFilter === 'all'
                 ? 'bg-slate-800 text-white shadow-md'
@@ -186,7 +192,7 @@ const BotMessagePage: React.FC = () => {
             <FaGlobe /> Todas
           </button>
           <button
-            onClick={() => setPlatformFilter('whatsapp')}
+            onClick={() => handlePlatformFilterChange('whatsapp')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
               platformFilter === 'whatsapp'
                 ? 'bg-green-600 text-white shadow-md'
@@ -196,7 +202,7 @@ const BotMessagePage: React.FC = () => {
             <FaWhatsapp /> WhatsApp
           </button>
           <button
-            onClick={() => setPlatformFilter('instagram')}
+            onClick={() => handlePlatformFilterChange('instagram')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
               platformFilter === 'instagram'
                 ? 'bg-pink-600 text-white shadow-md'

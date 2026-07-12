@@ -42,7 +42,7 @@ const ConversationsTab: React.FC<ConversationsTabProps> = ({
             <div 
               key={`${chat._id.platform}-${chat._id.platform_id}`}
               onClick={() => { onSelectChat(chat); setShowChatList(false); }}
-              className={`p-4 border-b cursor-pointer transition-colors hover:bg-indigo-50 ${selectedChat?._id.platform_id === chat._id.platform_id ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : ''}`}
+              className={`p-4 border-b cursor-pointer transition-colors hover:bg-indigo-50 ${selectedChat?._id.platform_id === chat._id.platform_id ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : chat.unreadCount > 0 ? 'bg-gray-100' : ''}`}
             >
               <div className="flex justify-between items-start mb-1">
                 <div className="flex items-center gap-2">
@@ -57,7 +57,14 @@ const ConversationsTab: React.FC<ConversationsTabProps> = ({
                       : chat._id.platform_id}
                   </p>
                 </div>
-                <span className="text-[10px] text-gray-400">{new Date(chat.lastTimestamp).toLocaleTimeString()}</span>
+                <div className="flex items-center gap-2">
+                  {chat.unreadCount > 0 && (
+                    <span className="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {chat.unreadCount}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-gray-400">{new Date(chat.lastTimestamp).toLocaleTimeString()}</span>
+                </div>
               </div>
               <p className="text-sm text-gray-500 truncate pl-5">{chat.lastMessage}</p>
             </div>

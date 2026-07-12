@@ -9,12 +9,15 @@ import GlobalModal from '../../components/shared/GlobalModal';
 import FAQModal from './components/FAQModal';
 import { FAQFormData } from '../faq/types';
 import { notify } from '../../components/shared/Toast';
+import { useNotifications } from '../../context/NotificationContext';
+import { FaCheckDouble } from 'react-icons/fa';
 
 type TabType = 'conversations' | 'training' | 'templates';
 
 const BotMessagePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('conversations');
   const [platformFilter, setPlatformFilter] = useState<'all' | 'whatsapp' | 'instagram'>('all');
+  const { refreshUnreadCount } = useNotifications();
   
   // State for Chat logic (Shared or scoped to tab)
   const [chats, setChats] = useState<any[]>([]);
@@ -117,6 +120,20 @@ const BotMessagePage: React.FC = () => {
     }
   };
 
+  const handleMarkAllAsRead = async () => {
+    setLoading(true);
+    try {
+      const result = await chatService.markAllAsRead();
+      notify.success(`${result.modifiedCount || 'Todos los'} mensajes marcados como leídos`);
+      loadChats();
+      refreshUnreadCount();
+    } catch (err) {
+      notify.error("Error al marcar mensajes como leídos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDeleteMessage = async () => {
     if (!msgToDelete || !selectedChat) return;
     setLoading(true);
@@ -180,36 +197,46 @@ const BotMessagePage: React.FC = () => {
 
       {/* Filtro de Plataforma */}
       {activeTab === 'conversations' && (
-        <div className="flex gap-2 mb-4 bg-white p-1 rounded-xl shadow-sm border w-fit">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border w-fit">
+            <button
+              onClick={() => handlePlatformFilterChange('all')}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                platformFilter === 'all'
+                  ? 'bg-slate-800 text-white shadow-md'
+                  : 'bg-white text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <FaGlobe /> Todas
+            </button>
+            <button
+              onClick={() => handlePlatformFilterChange('whatsapp')}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                platformFilter === 'whatsapp'
+                  ? 'bg-green-600 text-white shadow-md'
+                  : 'bg-white text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <FaWhatsapp /> WhatsApp
+            </button>
+            <button
+              onClick={() => handlePlatformFilterChange('instagram')}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                platformFilter === 'instagram'
+                  ? 'bg-pink-600 text-white shadow-md'
+                  : 'bg-white text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <FaInstagram /> Instagram
+            </button>
+          </div>
           <button
-            onClick={() => handlePlatformFilterChange('all')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              platformFilter === 'all'
-                ? 'bg-slate-800 text-white shadow-md'
-                : 'bg-white text-slate-500 hover:bg-slate-50'
-            }`}
+            onClick={handleMarkAllAsRead}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-all shadow-sm disabled:opacity-50"
+            title="Marcar todos los mensajes como leídos"
           >
-            <FaGlobe /> Todas
-          </button>
-          <button
-            onClick={() => handlePlatformFilterChange('whatsapp')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              platformFilter === 'whatsapp'
-                ? 'bg-green-600 text-white shadow-md'
-                : 'bg-white text-slate-500 hover:bg-slate-50'
-            }`}
-          >
-            <FaWhatsapp /> WhatsApp
-          </button>
-          <button
-            onClick={() => handlePlatformFilterChange('instagram')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              platformFilter === 'instagram'
-                ? 'bg-pink-600 text-white shadow-md'
-                : 'bg-white text-slate-500 hover:bg-slate-50'
-            }`}
-          >
-            <FaInstagram /> Instagram
+            <FaCheckDouble size={14} /> Marcar todo leído
           </button>
         </div>
       )}

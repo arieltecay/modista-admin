@@ -5,6 +5,7 @@ export const getMessages = (platform: string, platformId: string) => apiClient.g
 export const sendMessage = (platform: string, platformId: string, body: string) => 
   apiClient.post(`/chat/${platform}/${platformId}/messages`, { body });
 
+export const markAllAsRead = () => apiClient.post('/chat/read-all');
 export const deleteMessage = (messageId: string) => apiClient.delete(`/chat/messages/${messageId}`);
 export const clearChat = (platform: string, platformId: string) => apiClient.delete(`/chat/${platform}/${platformId}/clear`);
 

@@ -197,7 +197,7 @@ const BotMessagePage: React.FC = () => {
 
       {/* Filtro de Plataforma */}
       {activeTab === 'conversations' && (
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
           <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border w-fit">
             <button
               onClick={() => handlePlatformFilterChange('all')}
@@ -233,7 +233,7 @@ const BotMessagePage: React.FC = () => {
           <button
             onClick={handleMarkAllAsRead}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-all shadow-sm disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-all shadow-sm disabled:opacity-50 w-full sm:w-auto"
             title="Marcar todos los mensajes como leídos"
           >
             <FaCheckDouble size={14} /> Marcar todo leído

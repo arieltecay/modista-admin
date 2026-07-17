@@ -65,6 +65,17 @@ const InscriptionsListMobile: React.FC<InscriptionsListMobileProps> = ({
                 }`}>
                 {inscription.paymentStatus === 'paid' ? '✅ Pagado' : '⏳ Pendiente'}
               </span>
+              {inscription.paymentSource && (
+                <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase border w-fit ${
+                  inscription.paymentSource === 'webhook'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : inscription.paymentSource === 'manual'
+                    ? 'bg-slate-50 text-slate-600 border-slate-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>
+                  {inscription.paymentSource === 'webhook' ? 'Webhook' : inscription.paymentSource === 'manual' ? 'Manual' : 'Link estático'}
+                </span>
+              )}
               {inscription.paymentStatus === 'pending' && (
                 <div className="flex gap-2">
                   <button

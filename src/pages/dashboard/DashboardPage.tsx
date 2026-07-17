@@ -17,6 +17,16 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { getTrafficData, TrafficData } from '../../services/analytics/analyticsService';
 
+interface FunnelStep {
+  step: string;
+  uniqueSessions: number;
+  conversionFromPrev: number | null;
+}
+
+interface FunnelStats {
+  funnel: FunnelStep[];
+}
+
 interface GeneralStats {
   totalRevenue: number;
   totalInscriptions: number;
@@ -54,6 +64,8 @@ const DashboardPage: React.FC = () => {
   const [traffic, setTraffic] = useState<TrafficData | null>(null);
   const [isRefreshingTraffic, setIsRefreshingTraffic] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [funnelStats, setFunnelStats] = useState<FunnelStats | null>(null);
+  const [isFunnelLoading, setIsFunnelLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -72,6 +84,20 @@ const DashboardPage: React.FC = () => {
       if (showLoader) setIsRefreshingTraffic(false);
     }
   }, [trafficStartDate, trafficEndDate]);
+
+  const fetchFunnelStats = useCallback(async () => {
+    setIsFunnelLoading(true);
+    try {
+      const data = await apiClient.get<FunnelStats>('/funnel/stats', {
+        params: { startDate, endDate },
+      });
+      setFunnelStats(data);
+    } catch (err) {
+      console.error('Error fetching funnel stats:', err);
+    } finally {
+      setIsFunnelLoading(false);
+    }
+  }, [startDate, endDate]);
 
   const handleCsvImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -114,8 +140,9 @@ const DashboardPage: React.FC = () => {
         .catch(err => console.error('Error fetching meta stats:', err));
 
       const trafficPromise = fetchTraffic(false);
+      const funnelPromise = fetchFunnelStats();
 
-      await Promise.allSettled([statsPromise, perfPromise, metaPromise, trafficPromise]);
+      await Promise.allSettled([statsPromise, perfPromise, metaPromise, trafficPromise, funnelPromise]);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -456,6 +483,94 @@ const DashboardPage: React.FC = () => {
           {!traffic && (
             <div className="text-center py-8 text-slate-400 italic text-sm">
               Cargando datos de tráfico...
+            </div>
+          )}
+        </div>
+      </div>
+      {/* Funnel de Conversión */}
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <ArrowTrendingUpIcon className="w-6 h-6 text-violet-500" />
+            <h2 className="text-xl font-bold text-slate-800">Embudo de Conversión</h2>
+          </div>
+          <span className="text-xs font-bold text-violet-600 bg-violet-50 px-3 py-1 rounded-full uppercase">Sesiones únicas</span>
+        </div>
+
+        <div className="p-6">
+          {isFunnelLoading && (
+            <div className="text-center py-8 text-slate-400 italic text-sm">Cargando embudo...</div>
+          )}
+
+          {!isFunnelLoading && (!funnelStats || funnelStats.funnel.length === 0) && (
+            <div className="text-center py-8 text-slate-400 italic text-sm">
+              Sin datos de embudo para este período. Los datos aparecen después del primer deploy con el nuevo tracking.
+            </div>
+          )}
+
+          {!isFunnelLoading && funnelStats && funnelStats.funnel.length > 0 && (
+            <div className="space-y-3">
+              {funnelStats.funnel.map((row, idx) => {
+                const STEP_LABELS: Record<string, string> = {
+                  course_detail_view: 'Vista de curso',
+                  cta_click: 'Click en CTA',
+                  form_view: 'Vio el formulario',
+                  form_start: 'Empezó a llenar',
+                  form_submit: 'Envió el formulario',
+                  lead: 'Lead generado',
+                  initiate_checkout: 'Inició checkout',
+                  redirect_to_payment: 'Redirigido a MP',
+                  purchase: 'Compra realizada',
+                };
+                const maxSessions = funnelStats.funnel[0]?.uniqueSessions || 1;
+                const pct = (row.uniqueSessions / maxSessions) * 100;
+                const isGoodConv = row.conversionFromPrev !== null && row.conversionFromPrev >= 50;
+                const isBadConv  = row.conversionFromPrev !== null && row.conversionFromPrev < 25;
+
+                return (
+                  <div key={row.step}>
+                    <div className="flex items-center justify-between text-sm mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-400 w-4">{idx + 1}</span>
+                        <span className="font-semibold text-slate-700">
+                          {STEP_LABELS[row.step] ?? row.step}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-slate-500 font-medium">{row.uniqueSessions.toLocaleString()}</span>
+                        {row.conversionFromPrev !== null && (
+                          <span
+                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                              isGoodConv
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : isBadConv
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}
+                          >
+                            {row.conversionFromPrev.toFixed(1)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                      <motion.div
+                        className="bg-violet-500 h-full rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.6, delay: idx * 0.05 }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              <p className="text-xs text-slate-400 pt-2">
+                % al lado de cada paso = conversión respecto al paso anterior.
+                <span className="inline-block ml-1 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded font-bold">&gt;50%</span> bueno
+                <span className="inline-block ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded font-bold">25-50%</span> revisar
+                <span className="inline-block ml-1 px-1.5 py-0.5 bg-red-100 text-red-700 rounded font-bold">&lt;25%</span> problema
+              </p>
             </div>
           )}
         </div>

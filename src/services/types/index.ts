@@ -27,6 +27,7 @@ export interface Inscription {
     courseDeeplink?: string;
     courseShortDescription?: string;
     paymentStatus: 'pending' | 'paid' | 'partial';
+    paymentSource?: 'webhook' | 'manual' | 'link_static' | null;
     sourceType?: 'app' | 'landing';
     landingPageId?: string;
     dateYear?: number;

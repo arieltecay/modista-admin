@@ -18,6 +18,7 @@ export interface Inscription {
   depositAmount?: number;
   depositDate?: string;
   paymentStatus: 'paid' | 'pending';
+  paymentSource?: 'webhook' | 'manual' | 'link_static' | null;
   sourceType?: 'app' | 'landing';
   marketingSource?: string;
   fechaInscripcion: string;

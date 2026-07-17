@@ -97,12 +97,25 @@ const InscriptionsTableDesktop: React.FC<InscriptionsTableDesktopProps> = ({
                   </td>
                 )}
                 <td className="px-4 py-4 text-sm whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2 py-0.5 text-[9px] font-black rounded-full uppercase tracking-tighter border ${inscription.paymentStatus === 'paid'
-                    ? 'bg-green-50 text-green-700 border-green-200'
-                    : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                    }`}>
-                    {inscription.paymentStatus === 'paid' ? 'PAGADO' : 'PENDIENTE'}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className={`inline-flex items-center px-2 py-0.5 text-[9px] font-black rounded-full uppercase tracking-tighter border ${inscription.paymentStatus === 'paid'
+                      ? 'bg-green-50 text-green-700 border-green-200'
+                      : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                      }`}>
+                      {inscription.paymentStatus === 'paid' ? 'PAGADO' : 'PENDIENTE'}
+                    </span>
+                    {inscription.paymentSource && (
+                      <span className={`inline-flex items-center px-2 py-0.5 text-[8px] font-bold rounded uppercase tracking-tighter border w-fit ${
+                        inscription.paymentSource === 'webhook'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : inscription.paymentSource === 'manual'
+                          ? 'bg-slate-50 text-slate-600 border-slate-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                        {inscription.paymentSource === 'webhook' ? 'Webhook' : inscription.paymentSource === 'manual' ? 'Manual' : 'Link estático'}
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-4 text-sm whitespace-nowrap">
                   <span className={`inline-flex items-center px-2 py-0.5 text-[9px] font-black rounded uppercase tracking-tighter border ${inscription.sourceType === 'landing'

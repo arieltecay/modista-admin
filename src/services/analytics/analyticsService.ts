@@ -4,6 +4,7 @@ export interface CampaignEntry {
   campaign: string;
   visits: number;
   leads: number;
+  purchases: number;
 }
 
 export interface DailyBreakdown {

@@ -454,6 +454,7 @@ const DashboardPage: React.FC = () => {
                       <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">Campaña</th>
                       <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-center">Visitas</th>
                       <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-center">Leads</th>
+                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-center">Compras</th>
                       <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">Tasa Conv.</th>
                     </tr>
                   </thead>
@@ -467,6 +468,11 @@ const DashboardPage: React.FC = () => {
                         <td className="px-4 py-3 text-center">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${camp.leads > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
                             {camp.leads}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${camp.purchases > 0 ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500'}`}>
+                            {camp.purchases}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right text-sm text-slate-600">

@@ -1,12 +1,13 @@
 import type { FC } from 'react';
 import Spinner from '@/components/shared/Spinner';
-import { HiCheckCircle, HiClock, HiCurrencyDollar, HiReply, HiMail, HiPhone, HiCalendar, HiTrash } from 'react-icons/hi';
+import { HiCheckCircle, HiClock, HiCurrencyDollar, HiReply, HiMail, HiPhone, HiCalendar, HiTrash, HiPencil } from 'react-icons/hi';
 import type { WorkshopInscription, Turno } from '../types';
 
 interface WorkshopInscriptionsListProps {
   inscriptions: WorkshopInscription[];
   loading: boolean;
   onManagePaymentClick: (inv: WorkshopInscription) => void;
+  onEditClick: (inv: WorkshopInscription) => void;
   onDeleteClick: (id: string, name: string) => void;
   lastMonthlyClosureDate?: string;
 }
@@ -110,6 +111,13 @@ const WorkshopInscriptionsList: FC<WorkshopInscriptionsListProps> = ({
             </div>
 
             <div className="flex gap-3">
+              <button 
+                onClick={() => onEditClick(inv)} 
+                className="p-3.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl active:scale-95 transition-all"
+                title="Editar Datos"
+              >
+                <HiPencil className="w-5 h-5" />
+              </button>
               <button 
                 onClick={() => onManagePaymentClick(inv)} 
                 className="flex-1 bg-indigo-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 active:scale-95 transition-all"

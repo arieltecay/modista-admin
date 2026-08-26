@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import Spinner from '@/components/shared/Spinner';
-import { HiArrowUp, HiArrowDown, HiClock, HiCurrencyDollar, HiTrash } from 'react-icons/hi';
+import { HiArrowUp, HiArrowDown, HiClock, HiCurrencyDollar, HiTrash, HiPencil } from 'react-icons/hi';
 import type { WorkshopInscription, WorkshopSortConfig, Turno } from '../types';
 import { formatDateTime } from '@/utils/date-utils';
 
@@ -10,6 +10,7 @@ interface WorkshopInscriptionsTableProps {
   sortConfig: WorkshopSortConfig;
   handleSort: (key: string) => void;
   onManagePaymentClick: (inv: WorkshopInscription) => void;
+  onEditClick: (inv: WorkshopInscription) => void;
   onDeleteClick: (id: string, name: string) => void;
   lastMonthlyClosureDate?: string;
 }
@@ -20,6 +21,7 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
   sortConfig, 
   handleSort, 
   onManagePaymentClick,
+  onEditClick,
   onDeleteClick,
   lastMonthlyClosureDate
 }) => {
@@ -143,6 +145,13 @@ const WorkshopInscriptionsTable: FC<WorkshopInscriptionsTableProps> = ({
                 </td>
                 <td className="px-8 py-6 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end gap-2">
+                    <button 
+                      onClick={() => onEditClick(inv)} 
+                      className="p-2.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
+                      title="Editar Datos"
+                    >
+                      <HiPencil className="w-4 h-4" />
+                    </button>
                     <button 
                       onClick={() => onManagePaymentClick(inv)} 
                       className="p-2.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"

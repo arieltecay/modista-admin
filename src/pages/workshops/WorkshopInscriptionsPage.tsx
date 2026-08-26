@@ -7,6 +7,7 @@ import { getTurnosByCourse } from '@/services/turnos/turnoService';
 import toast from 'react-hot-toast';
 import Spinner from '@/components/shared/Spinner';
 import PaymentHistoryModal from '@/pages/workshops/components/PaymentHistoryModal';
+import EditInscriptionModal from '@/pages/workshops/components/EditInscriptionModal';
 import WorkshopInscriptionsTable from '@/pages/workshops/components/WorkshopInscriptionsTable';
 import WorkshopInscriptionsList from '@/pages/workshops/components/WorkshopInscriptionsList';
 import Pagination from '@/components/shared/Pagination';
@@ -31,6 +32,8 @@ const WorkshopInscriptionsPage: FC = () => {
   const [sortConfig, setSortConfig] = useState<WorkshopSortConfig>({ key: 'fechaInscripcion', direction: 'desc' });
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedInscription, setSelectedInscription] = useState<WorkshopInscription | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editInscription, setEditInscription] = useState<WorkshopInscription | null>(null);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, inscriptionId: '', studentName: '' });
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -74,6 +77,11 @@ const WorkshopInscriptionsPage: FC = () => {
 
   const handleDelete = (inscriptionId: string, studentName: string) => {
     setDeleteModal({ isOpen: true, inscriptionId, studentName });
+  };
+
+  const handleEditClick = (inscription: WorkshopInscription) => {
+    setEditInscription(inscription);
+    setIsEditModalOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -194,6 +202,7 @@ const WorkshopInscriptionsPage: FC = () => {
           sortConfig={sortConfig} 
           handleSort={handleSort} 
           onManagePaymentClick={(i) => { setSelectedInscription(i); setIsPaymentModalOpen(true); }} 
+          onEditClick={handleEditClick}
           onDeleteClick={(id, name) => handleDelete(id, name)}
           lastMonthlyClosureDate={course?.lastMonthlyClosureDate}
         />
@@ -201,6 +210,7 @@ const WorkshopInscriptionsPage: FC = () => {
           inscriptions={inscriptions} 
           loading={loading} 
           onManagePaymentClick={(i) => { setSelectedInscription(i); setIsPaymentModalOpen(true); }} 
+          onEditClick={handleEditClick}
           onDeleteClick={(id, name) => handleDelete(id, name)}
           lastMonthlyClosureDate={course?.lastMonthlyClosureDate}
         />
@@ -225,6 +235,15 @@ const WorkshopInscriptionsPage: FC = () => {
           onSuccess={fetchData} 
           inscription={selectedInscription} 
           lastMonthlyClosureDate={course?.lastMonthlyClosureDate}
+        />
+      )}
+
+      {editInscription && (
+        <EditInscriptionModal 
+          isOpen={isEditModalOpen} 
+          onClose={() => { setIsEditModalOpen(false); setEditInscription(null); }} 
+          onSuccess={fetchData} 
+          inscription={editInscription} 
         />
       )}
 

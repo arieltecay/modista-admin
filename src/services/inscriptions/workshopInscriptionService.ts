@@ -22,6 +22,12 @@ export const getAvailableTurnosForInscription = async (inscriptionId: string): P
 export const deleteWorkshopInscription = async (inscriptionId: string): Promise<void> =>
   apiClient.delete(`/workshop-inscriptions/workshop/${inscriptionId}`);
 
+export const updateWorkshopInscriptionPersonalData = async (
+  inscriptionId: string,
+  data: { nombre: string; apellido: string; email: string; celular: string }
+): Promise<WorkshopInscriptionData> =>
+  apiClient.patch(`/workshop-inscriptions/${inscriptionId}/personal-data`, data);
+
 export const exportWorkshopInscriptions = async (
   workshopId: string,
   paymentStatusFilter: 'all' | 'paid' | 'pending' | 'partial' = 'all',

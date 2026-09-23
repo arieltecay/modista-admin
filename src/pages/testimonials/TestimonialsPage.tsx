@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { testimonialService, Testimonial } from '../../services/testimonialService';
-import { 
-  PlusIcon, 
-  PencilSquareIcon, 
-  TrashIcon, 
+import { getCourses } from '../../services/courses/coursesService';
+import type { Course } from '../../services/courses/types';
+import CloudinaryImageUploader from '../../components/shared/CloudinaryImageUploader';
+import {
+  PlusIcon,
+  PencilSquareIcon,
+  TrashIcon,
   EyeIcon,
   EyeSlashIcon,
   XMarkIcon,
@@ -11,20 +14,44 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
 
+interface TestimonialFormData {
+  name: string;
+  description: string;
+  role: string;
+  avatarUrl: string;
+  courseId: string;
+  order: number;
+  isActive: boolean;
+}
+
+const EMPTY_FORM: TestimonialFormData = {
+  name: '',
+  description: '',
+  role: '',
+  avatarUrl: '',
+  courseId: '',
+  order: 0,
+  isActive: true
+};
+
+/**
+ * Gestión de Testimonios.
+ * Los testimonios alimentan la Home y las Landing Pages (/lp/:slug):
+ * - courseId: si se asocia a un curso, aparece solo en la landing de ese curso.
+ * - Si queda vacío, es genérico y aparece en todas.
+ * - order: ordena la aparición (0 primero).
+ */
 const TestimonialsPage: React.FC = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    role: '',
-    isActive: true
-  });
+  const [formData, setFormData] = useState<TestimonialFormData>(EMPTY_FORM);
 
   useEffect(() => {
     fetchTestimonials();
+    fetchCourses();
   }, []);
 
   const fetchTestimonials = async () => {
@@ -40,6 +67,22 @@ const TestimonialsPage: React.FC = () => {
     }
   };
 
+  const fetchCourses = async () => {
+    try {
+      const data = await getCourses();
+      setCourses(Array.isArray(data) ? data : []);
+    } catch {
+      // No bloqueante: el select de curso puede quedar vacío
+      setCourses([]);
+    }
+  };
+
+  const getCourseTitle = (courseId?: string): string | null => {
+    if (!courseId) return null;
+    const course = courses.find((c) => c.id === courseId || c.uuid === courseId);
+    return course?.title || courseId;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -52,7 +95,7 @@ const TestimonialsPage: React.FC = () => {
       }
       setIsModalOpen(false);
       setEditingTestimonial(null);
-      resetForm();
+      setFormData(EMPTY_FORM);
       fetchTestimonials();
     } catch (error) {
       toast.error('Error al guardar');
@@ -76,6 +119,9 @@ const TestimonialsPage: React.FC = () => {
       name: testimonial.name,
       description: testimonial.description,
       role: testimonial.role || '',
+      avatarUrl: testimonial.avatarUrl || '',
+      courseId: testimonial.courseId || '',
+      order: testimonial.order ?? 0,
       isActive: testimonial.isActive
     });
     setIsModalOpen(true);
@@ -91,13 +137,10 @@ const TestimonialsPage: React.FC = () => {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      role: '',
-      isActive: true
-    });
+  const openNewModal = () => {
+    setEditingTestimonial(null);
+    setFormData(EMPTY_FORM);
+    setIsModalOpen(true);
   };
 
   return (
@@ -108,14 +151,13 @@ const TestimonialsPage: React.FC = () => {
             <ChatBubbleBottomCenterTextIcon className="w-8 h-8 text-indigo-600" />
             Gestión de Testimonios
           </h1>
-          <p className="text-gray-600">Administra los comentarios de tus alumnos</p>
+          <p className="text-gray-600">
+            Administra los comentarios de tus alumnas. Se muestran en la Home y en las Landing Pages
+            (los asociados a un curso aparecen solo en la landing de ese curso).
+          </p>
         </div>
         <button
-          onClick={() => {
-            setEditingTestimonial(null);
-            resetForm();
-            setIsModalOpen(true);
-          }}
+          onClick={openNewModal}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
         >
           <PlusIcon className="w-5 h-5" />
@@ -132,7 +174,9 @@ const TestimonialsPage: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orden</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alumna</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Curso</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
@@ -141,9 +185,36 @@ const TestimonialsPage: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {testimonials?.map((t) => (
                 <tr key={t._id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                    {t.order ?? 0}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{t.name}</div>
-                    {t.role && <div className="text-sm text-gray-500">{t.role}</div>}
+                    <div className="flex items-center gap-3">
+                      {t.avatarUrl ? (
+                        <img
+                          src={t.avatarUrl}
+                          alt={t.name}
+                          className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                          {t.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium text-gray-900">{t.name}</div>
+                        {t.role && <div className="text-sm text-gray-500">{t.role}</div>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getCourseTitle(t.courseId) ? (
+                      <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md text-xs font-medium">
+                        {getCourseTitle(t.courseId)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Genérico (todas las landings)</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm text-gray-600 line-clamp-2 max-w-md">{t.description}</p>
@@ -177,7 +248,7 @@ const TestimonialsPage: React.FC = () => {
               ))}
               {testimonials.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     No hay testimonios registrados.
                   </td>
                 </tr>
@@ -192,8 +263,8 @@ const TestimonialsPage: React.FC = () => {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="fixed inset-0 bg-black bg-opacity-30 transition-opacity" onClick={() => setIsModalOpen(false)}></div>
-            
-            <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6 overflow-hidden">
+
+            <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6 overflow-hidden max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold text-gray-900">
                   {editingTestimonial ? 'Editar Testimonio' : 'Nuevo Testimonio'}
@@ -223,7 +294,15 @@ const TestimonialsPage: React.FC = () => {
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Ej: Alumna de Taller de Costura"
+                    placeholder="Ej: Alumna del curso de Moldería"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Foto (recomendado — aumenta la confianza)</label>
+                  <CloudinaryImageUploader
+                    selectedImage={formData.avatarUrl}
+                    onImageSelect={(imageUrl) => setFormData({ ...formData, avatarUrl: imageUrl })}
                   />
                 </div>
 
@@ -237,6 +316,37 @@ const TestimonialsPage: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Escribe aquí el comentario..."
                   ></textarea>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Curso asociado</label>
+                  <select
+                    value={formData.courseId}
+                    onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                  >
+                    <option value="">— Genérico (aparece en todas las landings) —</option>
+                    {courses.map((c) => (
+                      <option key={c.id || c.uuid} value={c.id || c.uuid}>
+                        {c.title}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Si elegís un curso, este testimonio aparece en la landing de ese curso.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Orden de aparición</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={formData.order}
+                    onChange={(e) => setFormData({ ...formData, order: Number(e.target.value) })}
+                    className="w-28 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">0 aparece primero. Útil para destacar el mejor testimonio.</p>
                 </div>
 
                 <div className="flex items-center gap-2">

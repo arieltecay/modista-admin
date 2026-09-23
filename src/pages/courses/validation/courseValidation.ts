@@ -83,6 +83,11 @@ export const courseSchema = yup.object({
     .boolean()
     .default(false),
 
+  /** Badge "Top Ventas" en la web (contenido real, lo marca la admin) */
+  isTopSeller: yup
+    .boolean()
+    .default(false),
+
   status: yup
     .string()
     .oneOf(['active', 'inactive'], 'Estado inválido')
@@ -102,5 +107,6 @@ export const defaultCourseValues = {
   coursePaid: '',
   mpPaymentLink: '',
   isPresencial: false,
+  isTopSeller: false,
   status: 'active',
 };

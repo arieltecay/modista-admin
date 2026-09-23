@@ -126,11 +126,11 @@ const CourseForm: React.FC<CourseFormProps> = ({ initialData = {}, onSubmit, isE
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-50">
           <label className="flex items-center gap-3 cursor-pointer group">
             <Controller name="isPresencial" control={control} render={({ field }) => (
-              <input 
-                type="checkbox" 
-                checked={field.value} 
-                onChange={(e) => setValue('isPresencial', e.target.checked, { shouldDirty: true })} 
-                className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" 
+              <input
+                type="checkbox"
+                checked={field.value}
+                onChange={(e) => setValue('isPresencial', e.target.checked, { shouldDirty: true })}
+                className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
               />
             )} />
             <div className="flex flex-col">
@@ -145,8 +145,8 @@ const CourseForm: React.FC<CourseFormProps> = ({ initialData = {}, onSubmit, isE
               <span className="text-[10px] text-gray-400 font-bold uppercase">Estado actual en la web</span>
             </div>
             <Controller name="status" control={control} render={({ field }) => (
-              <select 
-                {...field} 
+              <select
+                {...field}
                 className={`bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500 ${field.value === 'active' ? 'text-indigo-600' : 'text-gray-400'}`}
               >
                 <option value="active">Activo</option>
@@ -154,6 +154,25 @@ const CourseForm: React.FC<CourseFormProps> = ({ initialData = {}, onSubmit, isE
               </select>
             )} />
           </div>
+        </div>
+
+        {/* Badge "Top Ventas": lo marca la admin a mano con criterio (contenido real).
+            El front lo muestra como cinta dorada en las cards del catálogo. */}
+        <div className="pt-4">
+          <label className="flex items-center gap-3 cursor-pointer group bg-amber-50/60 rounded-2xl px-4 py-3 border border-amber-100">
+            <Controller name="isTopSeller" control={control} render={({ field }) => (
+              <input
+                type="checkbox"
+                checked={Boolean(field.value)}
+                onChange={(e) => setValue('isTopSeller', e.target.checked, { shouldDirty: true })}
+                className="w-5 h-5 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+              />
+            )} />
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-amber-800">🏆 Top Ventas</span>
+              <span className="text-[10px] text-amber-600/80 font-bold uppercase">Muestra el badge dorado en la web — marcar solo el/los más vendidos reales</span>
+            </div>
+          </label>
         </div>
       </div>
 

@@ -6,6 +6,10 @@ export interface Testimonial {
   description: string;
   role?: string;
   avatarUrl?: string;
+  /** uuid del curso asociado. Vacío = genérico (aparece en todas las landings) */
+  courseId?: string;
+  /** Orden de aparición (menor = primero) */
+  order?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { apiClient } from '@/services/config/apiClient';
 import { 
   HiCloudUpload, 
@@ -10,16 +10,23 @@ import {
   HiRefresh, 
   HiChevronDown,
   HiChevronUp,
-  HiArrowsExpand
+  HiArrowsExpand,
+  HiInformationCircle
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
 interface CloudinaryImageUploaderProps {
   selectedImage: string;
   onImageSelect: (imageUrl: string, publicId: string) => void;
+  /** Texto guía contextual (ej: "4:5 · 1200×1500" para cursos) */
+  recommendedHint?: string;
 }
 
-const CloudinaryImageUploader: FC<CloudinaryImageUploaderProps> = ({ selectedImage, onImageSelect }) => {
+const CloudinaryImageUploader: FC<CloudinaryImageUploaderProps> = ({ 
+  selectedImage, 
+  onImageSelect,
+  recommendedHint 
+}) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [removeBackgroundOnUpload, setRemoveBackgroundOnUpload] = useState(false);
@@ -27,25 +34,43 @@ const CloudinaryImageUploader: FC<CloudinaryImageUploaderProps> = ({ selectedIma
   const [showTools, setShowTools] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<'original' | '1:1' | '16:9' | '4:5' | '9:16'>('original');
   const [isSmartCropping, setIsSmartCropping] = useState(false);
+  const [originalUrl, setOriginalUrl] = useState<string>('');
+
+  // Sincronizar originalUrl cuando cambia selectedImage (ej: al editar un curso existente)
+  useEffect(() => {
+    if (selectedImage && !isUploading) {
+      setOriginalUrl(selectedImage);
+    }
+  }, [selectedImage, isUploading]);
 
   const transformedUrl = useMemo(() => {
-    if (!selectedImage || !selectedImage.includes('cloudinary.com')) return selectedImage;
+    const sourceUrl = originalUrl || selectedImage;
+    if (!sourceUrl || !sourceUrl.includes('cloudinary.com')) return sourceUrl;
+    
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'ddfee9hht';
     const baseUrl = `https://res.cloudinary.com/${cloudName}/image/upload`;
-    const urlParts = selectedImage.split('/upload/');
-    if (urlParts.length < 2) return selectedImage;
+    const urlParts = sourceUrl.split('/upload/');
+    if (urlParts.length < 2) return sourceUrl;
+    
     const pathAfterUpload = urlParts[1];
     const pathParts = pathAfterUpload.split('/');
-    if (pathParts[0].startsWith('v') && !isNaN(Number(pathParts[0].substring(1)))) pathParts.shift();
-    const fileName = pathParts.join('/');
+    // Saltar segmento de versión (v1234567890)
+    if (pathParts[0].startsWith('v') && !isNaN(Number(pathParts[0].substring(1)))) {
+      pathParts.shift();
+    }
+    // Robustez: quedarse solo con la ruta final (carpeta/archivo.ext) 
+    // para ignorar cualquier transformación previa guardada en la URL
+    const fileName = pathParts.slice(-2).join('/'); // ej: "modista_app/imagen.jpg"
+    
     const transformations: string[] = ['f_auto,q_auto'];
     if (aspectRatio !== 'original') {
       const arMap = { '1:1': '1.0', '16:9': '1.77', '4:5': '0.8', '9:16': '0.56' };
       transformations.push(`ar_${arMap[aspectRatio]},c_pad,b_gen_fill`);
     }
     if (isSmartCropping && aspectRatio === 'original') transformations.push('c_fill,g_auto');
+    
     return `${baseUrl}/${transformations.join('/')}/${fileName}`;
-  }, [selectedImage, aspectRatio, isSmartCropping]);
+  }, [originalUrl, selectedImage, aspectRatio, isSmartCropping]);
 
   const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -61,8 +86,10 @@ const CloudinaryImageUploader: FC<CloudinaryImageUploaderProps> = ({ selectedIma
       const response: any = await apiClient.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       const { imageUrl, publicId } = response;
       setCurrentPublicId(publicId);
-      onImageSelect(imageUrl, publicId);
+      setOriginalUrl(imageUrl); // Guardamos la URL ORIGINAL como fuente canónica
+      onImageSelect(imageUrl, publicId); // Siempre enviamos la original al formulario
       setAspectRatio('original');
+      setIsSmartCropping(false);
       toast.success('Imagen lista y optimizada');
     } catch (error) {
       toast.error('Error al subir la imagen');
@@ -76,12 +103,20 @@ const CloudinaryImageUploader: FC<CloudinaryImageUploaderProps> = ({ selectedIma
       await apiClient.delete(`/upload?publicId=${currentPublicId}`);
       onImageSelect('', '');
       setCurrentPublicId(null);
+      setOriginalUrl('');
       toast.success('Imagen eliminada');
     } catch (error) { toast.error('Error al eliminar'); } finally { setIsDeleting(false); }
   };
 
-  const applyChanges = () => { onImageSelect(transformedUrl, currentPublicId || ''); toast.success('Cambios aplicados'); };
-  const resetChanges = () => { setAspectRatio('original'); setIsSmartCropping(false); };
+  // Solo actualiza el preview, NO persiste en el formulario
+  const applyChanges = () => { 
+    toast.success('Vista aplicada al preview — los recortes se generan automáticamente en la web según el contexto'); 
+  };
+  
+  const resetChanges = () => { 
+    setAspectRatio('original'); 
+    setIsSmartCropping(false); 
+  };
 
   return (
     <div className="space-y-6 p-6 bg-white border border-gray-100 rounded-3xl shadow-sm">
@@ -110,15 +145,61 @@ const CloudinaryImageUploader: FC<CloudinaryImageUploaderProps> = ({ selectedIma
               {isUploading ? <div className="animate-spin w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full"></div> : <div className="text-center p-6"><HiCloudUpload size={40} className="mx-auto text-indigo-400 mb-2" /><p className="text-sm font-bold text-gray-800">Cargar Foto</p></div>}
             </label>
           </div>
-          {selectedImage && (
+          { (originalUrl || selectedImage) && (
             <div className="bg-gray-50/50 rounded-3xl border border-gray-100 overflow-hidden">
-              <button onClick={() => setShowTools(!showTools)} className="w-full flex items-center justify-between p-4 hover:bg-gray-50"><div className="flex items-center space-x-2 text-indigo-600"><HiArrowsExpand size={20} /><span className="text-sm font-bold uppercase">Adaptar Tamaño</span></div>{showTools ? <HiChevronUp size={20} /> : <HiChevronDown size={20} />}</button>
-              {showTools && <div className="p-5 pt-0 space-y-5"><select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as any)} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm"><option value="original">Original</option><option value="1:1">1:1</option><option value="16:9">16:9</option></select><div className="flex space-x-3"><button onClick={applyChanges} className="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm font-bold">Aplicar</button><button onClick={resetChanges} className="px-4 bg-white border border-gray-200 rounded-xl"><HiRefresh size={20} /></button></div></div>}
+              <button onClick={() => setShowTools(!showTools)} className="w-full flex items-center justify-between p-4 hover:bg-gray-50">
+                <div className="flex items-center space-x-2 text-indigo-600">
+                  <HiArrowsExpand size={20} />
+                  <span className="text-sm font-bold uppercase">Adaptar Tamaño (solo preview)</span>
+                </div>
+                {showTools ? <HiChevronUp size={20} /> : <HiChevronDown size={20} />}
+              </button>
+              {showTools && (
+                <div className="p-5 pt-0 space-y-5">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Ratio de aspecto</label>
+                    <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value as any)} className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm">
+                      <option value="original">Original</option>
+                      <option value="1:1">1:1 (Cuadrado)</option>
+                      <option value="4:5">4:5 (Curso · Retrato)</option>
+                      <option value="16:9">16:9 (Banner · Panorámico)</option>
+                      <option value="9:16">9:16 (Stories · Vertical)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={isSmartCropping} onChange={(e) => setIsSmartCropping(e.target.checked)} className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                      <span className="text-sm font-medium text-gray-700">Recorte inteligente (g_auto) — centra el sujeto automáticamente</span>
+                    </label>
+                  </div>
+                  {recommendedHint && (
+                    <div className="flex items-center gap-2 text-xs text-indigo-600 bg-indigo-50 px-3 py-2 rounded-xl border border-indigo-100">
+                      <HiInformationCircle size={16} />
+                      <span className="font-medium">Recomendado:</span> <span className="font-mono">{recommendedHint}</span>
+                    </div>
+                  )}
+                  <div className="flex space-x-3 pt-2">
+                    <button onClick={applyChanges} className="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm font-bold" disabled={aspectRatio === 'original' && !isSmartCropping}>
+                      Aplicar al preview
+                    </button>
+                    <button onClick={resetChanges} className="px-4 bg-white border border-gray-200 rounded-xl">
+                      <HiRefresh size={20} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
         <div className="relative group rounded-[2.5rem] overflow-hidden border border-gray-100 bg-gray-50 aspect-video flex items-center justify-center shadow-inner">
-          {selectedImage ? <><img src={transformedUrl} alt="Vista previa" className="max-w-full max-h-full object-contain" /><button type="button" onClick={handleDelete} className="absolute top-4 right-4 bg-white/90 text-red-600 p-2 rounded-2xl"><HiTrash size={20} /></button></> : <HiOutlinePhotograph size={64} className="opacity-20" />}
+          { (originalUrl || selectedImage) ? (
+            <>
+              <img src={transformedUrl} alt="Vista previa" className="max-w-full max-h-full object-contain" />
+              <button type="button" onClick={handleDelete} className="absolute top-4 right-4 bg-white/90 text-red-600 p-2 rounded-2xl"><HiTrash size={20} /></button>
+            </>
+          ) : (
+            <HiOutlinePhotograph size={64} className="opacity-20" />
+          )}
         </div>
       </div>
     </div>

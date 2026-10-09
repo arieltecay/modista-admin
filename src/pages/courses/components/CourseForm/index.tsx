@@ -36,7 +36,11 @@ const CourseForm: React.FC<CourseFormProps> = ({ initialData = {}, onSubmit, isE
       <div className="space-y-2">
         <label className="text-sm font-bold text-gray-700 uppercase tracking-wider ml-1">Imagen del Curso</label>
         <Controller name="imageUrl" control={control} render={({ field }) => (
-          <CloudinaryImageUploader selectedImage={field.value} onImageSelect={handleImageSelect} />
+          <CloudinaryImageUploader 
+            selectedImage={field.value} 
+            onImageSelect={handleImageSelect} 
+            recommendedHint="4:5 · 1200×1500"
+          />
         )} />
         {errors.imageUrl && <p className="text-xs text-red-500 font-bold ml-1">{errors.imageUrl.message as string}</p>}
       </div>

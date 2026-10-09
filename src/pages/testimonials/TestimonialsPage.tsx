@@ -303,6 +303,7 @@ const TestimonialsPage: React.FC = () => {
                   <CloudinaryImageUploader
                     selectedImage={formData.avatarUrl}
                     onImageSelect={(imageUrl) => setFormData({ ...formData, avatarUrl: imageUrl })}
+                    recommendedHint="1:1 · 400×400"
                   />
                 </div>
 

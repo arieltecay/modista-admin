@@ -249,6 +249,7 @@ export const CarouselManagerPage = () => {
                       setValue('imageUrl', url, { shouldValidate: true }); 
                       setValue('imagePublicId', pid, { shouldValidate: true }); 
                     }} 
+                    recommendedHint="16:9 · 1920×1080"
                   />
                   {errors.imagePublicId && <p className="text-xs text-red-500 font-bold ml-1">{errors.imagePublicId.message}</p>}
                 </div>

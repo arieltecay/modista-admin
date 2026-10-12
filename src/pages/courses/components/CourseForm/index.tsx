@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { courseSchema, defaultCourseValues } from '@/pages/courses/validation/courseValidation';
 import CloudinaryImageUploader from '@/components/shared/CloudinaryImageUploader';
 import { CourseFormProps } from './types';
-import FormattingGuide from './FormattingGuide';
+import RichTextEditor from './RichTextEditor';
 
 const CourseForm: React.FC<CourseFormProps> = ({ initialData = {}, onSubmit, isEditing = false, isSubmitting = false }) => {
   const { control, handleSubmit, formState: { errors, isValid }, watch, setValue, reset } = useForm({
@@ -15,6 +15,7 @@ const CourseForm: React.FC<CourseFormProps> = ({ initialData = {}, onSubmit, isE
 
   const isPresencial = watch('isPresencial');
   const status = watch('status');
+  const longDescriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
   const handleImageSelect = (imageUrl: string, publicId: string) => {
     setValue('imageUrl', imageUrl, { shouldValidate: true });
@@ -81,12 +82,15 @@ const CourseForm: React.FC<CourseFormProps> = ({ initialData = {}, onSubmit, isE
       </div>
 
       <div className="space-y-2">
-        <div className="flex justify-between items-center mb-1">
-          <label className="text-sm font-bold text-gray-700 uppercase tracking-wider ml-1">Descripción Larga (Detalles)</label>
-          <FormattingGuide />
-        </div>
+        <label className="text-sm font-bold text-gray-700 uppercase tracking-wider ml-1">Descripción Larga (Detalles)</label>
         <Controller name="longDescription" control={control} render={({ field }) => (
-          <textarea {...field} rows={6} className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 transition-all font-medium" placeholder="Explica todo lo que incluye el curso..." />
+          <RichTextEditor
+            value={typeof field.value === 'string' ? field.value : ''}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            textareaRef={longDescriptionRef}
+            registerRef={field.ref}
+          />
         )} />
         {errors.longDescription && <p className="text-xs text-red-500 font-bold ml-1">{errors.longDescription.message as string}</p>}
       </div>

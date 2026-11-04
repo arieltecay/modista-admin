@@ -1,587 +1,309 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { apiClient } from '../../services/config/apiClient';
+import { useMemo, useState } from 'react';
 import {
-  CurrencyDollarIcon,
-  UserGroupIcon,
-  ChartBarIcon,
+  ArrowPathIcon,
   ArrowTrendingUpIcon,
   CalendarIcon,
   ChatBubbleBottomCenterTextIcon,
-  EyeIcon,
-  PaperAirplaneIcon,
-  ArrowPathIcon,
-  GlobeAltIcon,
-  DocumentArrowUpIcon,
+  CurrencyDollarIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
-import { getTrafficData, TrafficData } from '../../services/analytics/analyticsService';
+import { useDashboardData } from './useDashboardData';
 
-interface FunnelStep {
-  step: string;
-  uniqueSessions: number;
-  conversionFromPrev: number | null;
-}
+const getLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
-interface FunnelStats {
-  funnel: FunnelStep[];
-}
+const formatCurrency = (amount: number): string =>
+  new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    maximumFractionDigits: 0,
+  }).format(amount || 0);
 
-interface GeneralStats {
-  totalRevenue: number;
-  totalInscriptions: number;
-  paidInscriptions: number;
-  partialInscriptions: number;
-  attribution: {
-    organic: number;
-    paidAds: number;
-  };
-}
+const FUNNEL_STEP_LABELS: Record<string, string> = {
+  course_detail_view: 'Vio el curso',
+  pricing_visible: 'Vio el precio',
+  cta_click: 'Tocó el botón de inscripción',
+  form_view: 'Vio el formulario',
+  form_start: 'Empezó a completar el formulario',
+  form_submit: 'Envió el formulario',
+  redirect_to_payment: 'Fue a Mercado Pago',
+  lead: 'Lead registrado',
+  initiate_checkout: 'Inició el pago',
+  purchase: 'Volvió con pago confirmado',
+};
 
-interface CoursePerformance {
-  _id: string;
-  courseTitle: string;
-  totalInscribed: number;
-  paidInscribed: number;
-  revenue: number;
-}
+const DashboardPage = () => {
+  const today = useMemo(() => new Date(), []);
+  const [startDate, setStartDate] = useState(() => {
+    const start = new Date(today);
+    start.setDate(start.getDate() - 30);
+    return getLocalDate(start);
+  });
+  const [endDate, setEndDate] = useState(() => getLocalDate(today));
+  const {
+    stats,
+    performance,
+    whatsAppStats,
+    traffic,
+    funnelStats,
+    isLoading,
+    isRefreshing,
+    hasLoadError,
+    refresh,
+  } = useDashboardData(startDate, endDate);
 
-interface MetaStats {
-  spent: number;
-  currency: string;
-  costPerMessage: number;
-  sent: number;
-  delivered: number;
-  read: number;
-  uniqueResponses: number;
-}
-
-const DashboardPage: React.FC = () => {
-  const [stats, setStats] = useState<GeneralStats | null>(null);
-  const [performance, setPerformance] = useState<CoursePerformance[]>([]);
-  const [metaStats, setMetaStats] = useState<MetaStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [traffic, setTraffic] = useState<TrafficData | null>(null);
-  const [isRefreshingTraffic, setIsRefreshingTraffic] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [funnelStats, setFunnelStats] = useState<FunnelStats | null>(null);
-  const [isFunnelLoading, setIsFunnelLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
-  const [trafficStartDate, setTrafficStartDate] = useState(startDate);
-  const [trafficEndDate, setTrafficEndDate] = useState(endDate);
-
-  const fetchTraffic = useCallback(async (showLoader = true) => {
-    if (showLoader) setIsRefreshingTraffic(true);
-    try {
-      const params = { startDate: trafficStartDate, endDate: trafficEndDate };
-      const data = await getTrafficData(params);
-      setTraffic(data);
-    } catch (err) {
-      console.error('Error fetching traffic:', err);
-    } finally {
-      if (showLoader) setIsRefreshingTraffic(false);
-    }
-  }, [trafficStartDate, trafficEndDate]);
-
-  const fetchFunnelStats = useCallback(async () => {
-    setIsFunnelLoading(true);
-    try {
-      const data = await apiClient.get<FunnelStats>('/funnel/stats', {
-        params: { startDate, endDate },
-      });
-      setFunnelStats(data);
-    } catch (err) {
-      console.error('Error fetching funnel stats:', err);
-    } finally {
-      setIsFunnelLoading(false);
-    }
-  }, [startDate, endDate]);
-
-  const handleCsvImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsImporting(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      await apiClient.post('/analytics/import-csv', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      toast.success('CSV importado correctamente');
-      fetchTraffic(true);
-    } catch (err: any) {
-      toast.error(err.message || 'Error al importar CSV');
-    } finally {
-      setIsImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = { startDate, endDate };
-
-      const statsPromise = apiClient.get('/dashboard/stats', { params })
-        .then(res => setStats(res))
-        .catch(err => console.error('Error fetching stats:', err));
-
-      const perfPromise = apiClient.get('/dashboard/performance', { params })
-        .then(res => setPerformance(res))
-        .catch(err => console.error('Error fetching performance:', err));
-
-      const metaPromise = apiClient.get('/dashboard/meta-whatsapp', { params })
-        .then(res => setMetaStats(res))
-        .catch(err => console.error('Error fetching meta stats:', err));
-
-      const trafficPromise = fetchTraffic(false);
-      const funnelPromise = fetchFunnelStats();
-
-      await Promise.allSettled([statsPromise, perfPromise, metaPromise, trafficPromise, funnelPromise]);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [startDate, endDate, fetchTraffic]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const paidRate = stats && stats.totalInscriptions > 0
+    ? (stats.paidInscriptions / stats.totalInscriptions) * 100
+    : 0;
 
   const kpis = [
     {
-      label: 'Ingresos Totales',
-      value: `$${stats?.totalRevenue.toLocaleString() || 0}`,
+      label: 'Ingresos asociados',
+      value: formatCurrency(stats?.totalRevenue ?? 0),
+      detail: 'Pagos acumulados de inscripciones creadas en el período',
       icon: CurrencyDollarIcon,
       color: 'bg-emerald-50 text-emerald-600',
-      description: 'Basado en pagos reales'
     },
     {
       label: 'Inscripciones',
-      value: stats?.totalInscriptions || 0,
+      value: (stats?.totalInscriptions ?? 0).toLocaleString('es-AR'),
+      detail: 'Registros creados en el período',
       icon: UserGroupIcon,
       color: 'bg-blue-50 text-blue-600',
-      description: 'Total de leads registrados'
     },
     {
-      label: 'Tasa de Conversión',
-      value: stats ? `${((stats.paidInscriptions / stats.totalInscriptions) * 100).toFixed(1)}%` : '0%',
+      label: 'Pagos confirmados',
+      value: (stats?.paidInscriptions ?? 0).toLocaleString('es-AR'),
+      detail: 'Estado actual: pago completo',
+      icon: CurrencyDollarIcon,
+      color: 'bg-violet-50 text-violet-600',
+    },
+    {
+      label: 'Inscripción a pago',
+      value: `${paidRate.toFixed(1)}%`,
+      detail: 'Pagos confirmados ÷ inscripciones',
       icon: ArrowTrendingUpIcon,
       color: 'bg-amber-50 text-amber-600',
-      description: 'Leads que pagaron el total'
-    },
-    {
-      label: 'Origen Paid (IG)',
-      value: stats?.attribution.paidAds || 0,
-      icon: ChartBarIcon,
-      color: 'bg-purple-50 text-purple-600',
-      description: 'Ventas atribuidas a Ads'
     },
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header & Filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <main className="space-y-6 pb-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard General</h1>
-          <p className="text-slate-500 mt-1">Resumen dinámico del rendimiento de tu academia.</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+            Rendimiento de ventas
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Pagos reales, campañas registradas y actividad de WhatsApp.
+          </p>
         </div>
-
-        <div className="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
-          <CalendarIcon className="w-5 h-5 text-slate-400 ml-2" />
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+          <CalendarIcon aria-hidden="true" className="ml-1 h-5 w-5 text-slate-400" />
+          <label className="sr-only" htmlFor="dashboard-start-date">Desde</label>
           <input
+            id="dashboard-start-date"
             type="date"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="text-sm font-medium text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer"
+            max={endDate}
+            onChange={(event) => setStartDate(event.target.value)}
+            className="min-w-0 border-0 bg-transparent text-sm font-medium text-slate-700 focus:ring-0"
           />
-          <span className="text-slate-300">|</span>
+          <span aria-hidden="true" className="text-slate-300">—</span>
+          <label className="sr-only" htmlFor="dashboard-end-date">Hasta</label>
           <input
+            id="dashboard-end-date"
             type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="text-sm font-medium text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer"
+            min={startDate}
+            max={getLocalDate(today)}
+            onChange={(event) => setEndDate(event.target.value)}
+            className="min-w-0 border-0 bg-transparent text-sm font-medium text-slate-700 focus:ring-0"
           />
-        </div>
-      </div>
-
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpis.map((kpi, idx) => (
-          <motion.div
-            key={kpi.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-shadow"
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={isLoading || isRefreshing}
+            aria-label="Actualizar tablero"
+            className="rounded-xl border border-slate-200 p-2 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-50"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-2xl ${kpi.color}`}>
-                <kpi.icon className="w-6 h-6" />
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-500">{kpi.label}</p>
-              <h3 className="text-2xl font-black text-slate-900 mt-1">{kpi.value}</h3>
-              <p className="text-xs text-slate-400 mt-2">{kpi.description}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            <ArrowPathIcon className={`h-4 w-4 text-slate-600 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Course Performance Table */}
-        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-slate-800">Cursos más Vendidos</h2>
-            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase">Top Performance</span>
+      {hasLoadError && (
+        <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Algunos datos no se pudieron cargar. Actualizá el tablero para volver a intentarlo.
+        </div>
+      )}
+
+      <section aria-label="Resumen de ventas" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {kpis.map((kpi) => (
+          <article key={kpi.label} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-500">{kpi.label}</p>
+                <p className="mt-2 text-2xl font-black text-slate-900" aria-live="polite">
+                  {isLoading ? '—' : kpi.value}
+                </p>
+              </div>
+              <span className={`rounded-xl p-3 ${kpi.color}`}>
+                <kpi.icon aria-hidden="true" className="h-5 w-5" />
+              </span>
+            </div>
+            <p className="mt-3 text-xs text-slate-400">{kpi.detail}</p>
+          </article>
+        ))}
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <section aria-labelledby="campaign-heading" className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm xl:col-span-2">
+          <div className="border-b border-slate-100 p-5 sm:p-6">
+            <h2 id="campaign-heading" className="text-lg font-bold text-slate-900">Campañas con UTM registradas</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Datos del sitio vinculados a una campaña UTM y a una inscripción con sesión registrada.
+            </p>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full min-w-[620px] text-left">
               <thead>
-                <tr className="bg-slate-50/50">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Nombre del Curso</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-center">Inscriptos</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-center">Pagados</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">Efectividad</th>
+                <tr className="bg-slate-50">
+                  <th scope="col" className="px-5 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">Campaña</th>
+                  <th scope="col" className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-500">IDs registrados</th>
+                  <th scope="col" className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-500">Inscripciones vinculadas</th>
+                  <th scope="col" className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-500">Con pago</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {performance.map((course) => (
-                  <tr key={course._id} className="hover:bg-slate-50/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-slate-800">{course.courseTitle}</p>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="text-slate-600 font-medium">{course.totalInscribed}</span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-                        {course.paidInscribed}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                          <div
-                            className="bg-indigo-500 h-full"
-                            style={{ width: `${(course.paidInscribed / course.totalInscribed) * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-bold text-slate-700">
-                          {((course.paidInscribed / course.totalInscribed) * 100).toFixed(0)}%
-                        </span>
-                      </div>
+                {(traffic?.topCampaigns ?? []).map((campaign) => {
+                  return (
+                    <tr key={campaign.campaign} className="hover:bg-slate-50/70">
+                      <th scope="row" className="max-w-[240px] truncate px-5 py-4 text-sm font-semibold text-slate-800">
+                        {campaign.campaign}
+                      </th>
+                      <td className="px-5 py-4 text-right text-sm text-slate-600">{campaign.visits.toLocaleString('es-AR')}</td>
+                      <td className="px-5 py-4 text-right text-sm text-slate-600">{campaign.leads.toLocaleString('es-AR')}</td>
+                      <td className="px-5 py-4 text-right text-sm font-bold text-emerald-700">{campaign.purchases.toLocaleString('es-AR')}</td>
+                    </tr>
+                  );
+                })}
+                {!isLoading && (traffic?.topCampaigns.length ?? 0) === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-5 py-10 text-center text-sm text-slate-400">
+                      No hay campañas con UTM registradas en este período.
                     </td>
                   </tr>
-                ))}
-                {performance.length === 0 && (
+                )}
+                {isLoading && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">No hay datos para este período</td>
+                    <td colSpan={4} className="px-5 py-10 text-center text-sm text-slate-400">Cargando campañas…</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
+          <p className="border-t border-slate-100 px-5 py-4 text-xs leading-relaxed text-slate-500 sm:px-6">
+            No son métricas exclusivas de Meta Ads: el endpoint no distingue la fuente de la campaña ni excluye importaciones históricas de GA4. El rango filtra cuándo se registró el ID del navegador; las inscripciones vinculadas pueden haberse creado en otra fecha. “Con pago” incluye pagos parciales y completos. El tracking depende del consentimiento.
+          </p>
+        </section>
 
-        {/* Meta WhatsApp Insights */}
-        <div className="bg-slate-900 rounded-3xl shadow-xl p-6 text-white flex flex-col">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <ChatBubbleBottomCenterTextIcon className="w-5 h-5 text-indigo-400" />
-              Insights de Meta
-            </h2>
-            <div className="px-2 py-1 bg-white/10 rounded-lg text-[10px] font-bold uppercase tracking-wider">WhatsApp API</div>
-          </div>
-
-          <div className="space-y-6 flex-1">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                <p className="text-xs text-slate-400 mb-1">Inversión</p>
-                <p className="text-xl font-black">{metaStats?.spent} {metaStats?.currency}</p>
-              </div>
-              <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                <p className="text-xs text-slate-400 mb-1">Costo p/msj</p>
-                <p className="text-xl font-black">{metaStats?.costPerMessage} {metaStats?.currency}</p>
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-4">
-              {[
-                { label: 'Enviados', value: metaStats?.sent, icon: PaperAirplaneIcon, color: 'text-indigo-400' },
-                { label: 'Entregados', value: metaStats?.delivered, icon: ChartBarIcon, color: 'text-blue-400' },
-                { label: 'Leídos', value: metaStats?.read, icon: EyeIcon, color: 'text-emerald-400' },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-white/5 group-hover:bg-white/10 transition-colors">
-                      <item.icon className={`w-4 h-4 ${item.color}`} />
-                    </div>
-                    <span className="text-sm font-medium text-slate-300">{item.label}</span>
-                  </div>
-                  <span className="font-bold text-lg">{item.value || 0}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-white/10">
-            <p className="text-[10px] text-slate-500 text-center leading-tight">
-              Datos obtenidos directamente desde la API Cloud de Meta. <br />
-              Actualizado en tiempo real.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Traffic Section */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-50 flex items-center justify-between flex-wrap gap-4">
+        <section aria-labelledby="whatsapp-heading" className="rounded-2xl bg-slate-900 p-5 text-white shadow-sm sm:p-6">
           <div className="flex items-center gap-3">
-            <GlobeAltIcon className="w-6 h-6 text-indigo-500" />
-            <h2 className="text-xl font-bold text-slate-800">Tráfico de la Web</h2>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {traffic?.lastUpdated && (
-              <span className="text-xs text-slate-400">
-                Últ. actualización: {new Date(traffic.lastUpdated).toLocaleTimeString()}
-              </span>
-            )}
-            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
-              <CalendarIcon className="w-4 h-4 text-slate-400 ml-1" />
-              <input
-                type="date"
-                value={trafficStartDate}
-                onChange={(e) => setTrafficStartDate(e.target.value)}
-                className="text-xs font-medium text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer w-28"
-              />
-              <span className="text-slate-300 text-xs">|</span>
-              <input
-                type="date"
-                value={trafficEndDate}
-                onChange={(e) => setTrafficEndDate(e.target.value)}
-                className="text-xs font-medium text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer w-28"
-              />
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              onChange={handleCsvImport}
-              className="hidden"
-            />
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isImporting}
-              className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
-              title="Importar CSV de GA4"
-            >
-              {isImporting ? (
-                <ArrowPathIcon className="w-4 h-4 text-indigo-500 animate-spin" />
-              ) : (
-                <DocumentArrowUpIcon className="w-4 h-4 text-indigo-500" />
-              )}
-            </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => fetchTraffic(true)}
-              disabled={isRefreshingTraffic}
-              className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
-            >
-              <ArrowPathIcon className={`w-4 h-4 text-slate-500 ${isRefreshingTraffic ? 'animate-spin' : ''}`} />
-            </motion.button>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-6">
-          {/* Mini KPIs */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100/50">
-              <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Sesiones</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">{traffic?.totalSessions?.toLocaleString() || 0}</p>
-            </div>
-            <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100/50">
-              <p className="text-xs font-semibold text-emerald-500 uppercase tracking-wider">Orgánico</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">{traffic?.organic?.toLocaleString() || 0}</p>
-            </div>
-            <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-100/50">
-              <p className="text-xs font-semibold text-purple-500 uppercase tracking-wider">Pagado</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">{traffic?.paid?.toLocaleString() || 0}</p>
-            </div>
-          </div>
-
-          {/* Channel Bars */}
-          {traffic && (
-            <div className="space-y-3">
-              {[
-                { label: 'Orgánico', value: traffic.organic, pct: traffic.totalSessions ? (traffic.organic / traffic.totalSessions) * 100 : 0, color: 'bg-emerald-500' },
-                { label: 'Pagado', value: traffic.paid, pct: traffic.totalSessions ? (traffic.paid / traffic.totalSessions) * 100 : 0, color: 'bg-purple-500' },
-                { label: 'Directo', value: traffic.direct, pct: traffic.totalSessions ? (traffic.direct / traffic.totalSessions) * 100 : 0, color: 'bg-blue-500' },
-              ].map((item) => (
-                <div key={item.label}>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="font-medium text-slate-700">{item.label}</span>
-                    <span className="text-slate-500">{item.value.toLocaleString()} ({item.pct.toFixed(1)}%)</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                    <div
-                      className={`${item.color} h-full rounded-full transition-all duration-500`}
-                      style={{ width: `${Math.min(item.pct, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Top Campaigns */}
-          {traffic && traffic.topCampaigns.length > 0 && (
+            <span className="rounded-xl bg-white/10 p-2.5 text-indigo-300">
+              <ChatBubbleBottomCenterTextIcon aria-hidden="true" className="h-5 w-5" />
+            </span>
             <div>
-              <h3 className="text-sm font-bold text-slate-700 mb-3">Top Campañas</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50/50">
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">Campaña</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-center">Visitas</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-center">Leads</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-center">Compras</th>
-                      <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase text-right">Tasa Conv.</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {traffic.topCampaigns.map((camp) => (
-                      <tr key={camp.campaign} className="hover:bg-slate-50/30 transition-colors">
-                        <td className="px-4 py-3">
-                          <span className="font-medium text-slate-800 text-sm">{camp.campaign}</span>
-                        </td>
-                        <td className="px-4 py-3 text-center text-sm text-slate-600">{camp.visits}</td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${camp.leads > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                            {camp.leads}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${camp.purchases > 0 ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500'}`}>
-                            {camp.purchases}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right text-sm text-slate-600">
-                          {camp.visits > 0 ? `${((camp.leads / camp.visits) * 100).toFixed(1)}%` : '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <h2 id="whatsapp-heading" className="text-lg font-bold">Mensajes de WhatsApp</h2>
+              <p className="text-xs text-slate-400">Estados guardados en el sistema</p>
             </div>
-          )}
-
-          {!traffic && (
-            <div className="text-center py-8 text-slate-400 italic text-sm">
-              Cargando datos de tráfico...
-            </div>
-          )}
-        </div>
-      </div>
-      {/* Funnel de Conversión */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <ArrowTrendingUpIcon className="w-6 h-6 text-violet-500" />
-            <h2 className="text-xl font-bold text-slate-800">Embudo de Conversión</h2>
           </div>
-          <span className="text-xs font-bold text-violet-600 bg-violet-50 px-3 py-1 rounded-full uppercase">Sesiones únicas</span>
+          <dl className="mt-7 space-y-4">
+            {[
+              ['Enviados', whatsAppStats?.sent],
+              ['Entregados', whatsAppStats?.delivered],
+              ['Leídos', whatsAppStats?.read],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between border-b border-white/10 pb-3 last:border-0">
+                <dt className="text-sm text-slate-300">{label}</dt>
+                <dd className="text-lg font-bold">{isLoading ? '—' : Number(value ?? 0).toLocaleString('es-AR')}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-4 text-xs leading-relaxed text-slate-400">
+            Este endpoint no informa inversión publicitaria ni costo por mensaje.
+          </p>
+        </section>
+      </div>
+
+      <section aria-labelledby="course-heading" className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div className="border-b border-slate-100 p-5 sm:p-6">
+          <h2 id="course-heading" className="text-lg font-bold text-slate-900">Inscripciones por curso</h2>
+          <p className="mt-1 text-sm text-slate-500">Inscripciones creadas y pagos completos en el período seleccionado.</p>
         </div>
-
-        <div className="p-6">
-          {isFunnelLoading && (
-            <div className="text-center py-8 text-slate-400 italic text-sm">Cargando embudo...</div>
-          )}
-
-          {!isFunnelLoading && (!funnelStats || funnelStats.funnel.length === 0) && (
-            <div className="text-center py-8 text-slate-400 italic text-sm">
-              Sin datos de embudo para este período. Los datos aparecen después del primer deploy con el nuevo tracking.
-            </div>
-          )}
-
-          {!isFunnelLoading && funnelStats && funnelStats.funnel.length > 0 && (
-            <div className="space-y-3">
-              {funnelStats.funnel.map((row, idx) => {
-                const STEP_LABELS: Record<string, string> = {
-                  course_detail_view: 'Vista de curso',
-                  cta_click: 'Click en CTA',
-                  form_view: 'Vio el formulario',
-                  form_start: 'Empezó a llenar',
-                  form_submit: 'Envió el formulario',
-                  lead: 'Lead generado',
-                  initiate_checkout: 'Inició checkout',
-                  redirect_to_payment: 'Redirigido a MP',
-                  purchase: 'Compra realizada',
-                };
-                const maxSessions = funnelStats.funnel[0]?.uniqueSessions || 1;
-                const pct = (row.uniqueSessions / maxSessions) * 100;
-                const isGoodConv = row.conversionFromPrev !== null && row.conversionFromPrev >= 50;
-                const isBadConv  = row.conversionFromPrev !== null && row.conversionFromPrev < 25;
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-left">
+            <thead>
+              <tr className="bg-slate-50">
+                <th scope="col" className="px-5 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">Curso</th>
+                <th scope="col" className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-500">Inscripciones</th>
+                <th scope="col" className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-500">Pagos completos</th>
+                <th scope="col" className="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-500">Tasa de pago</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {performance.map((course) => {
+                const coursePaidRate = course.totalInscribed > 0
+                  ? (course.paidInscribed / course.totalInscribed) * 100
+                  : 0;
 
                 return (
-                  <div key={row.step}>
-                    <div className="flex items-center justify-between text-sm mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-400 w-4">{idx + 1}</span>
-                        <span className="font-semibold text-slate-700">
-                          {STEP_LABELS[row.step] ?? row.step}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-slate-500 font-medium">{row.uniqueSessions.toLocaleString()}</span>
-                        {row.conversionFromPrev !== null && (
-                          <span
-                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                              isGoodConv
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : isBadConv
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-amber-100 text-amber-700'
-                            }`}
-                          >
-                            {row.conversionFromPrev.toFixed(1)}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <motion.div
-                        className="bg-violet-500 h-full rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.6, delay: idx * 0.05 }}
-                      />
-                    </div>
-                  </div>
+                  <tr key={course._id}>
+                    <th scope="row" className="px-5 py-4 text-sm font-semibold text-slate-800">{course.courseTitle}</th>
+                    <td className="px-5 py-4 text-right text-sm text-slate-600">{course.totalInscribed.toLocaleString('es-AR')}</td>
+                    <td className="px-5 py-4 text-right text-sm text-emerald-700">{course.paidInscribed.toLocaleString('es-AR')}</td>
+                    <td className="px-5 py-4 text-right text-sm text-slate-600">{coursePaidRate.toFixed(1)}%</td>
+                  </tr>
                 );
               })}
-
-              <p className="text-xs text-slate-400 pt-2">
-                % al lado de cada paso = conversión respecto al paso anterior.
-                <span className="inline-block ml-1 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded font-bold">&gt;50%</span> bueno
-                <span className="inline-block ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded font-bold">25-50%</span> revisar
-                <span className="inline-block ml-1 px-1.5 py-0.5 bg-red-100 text-red-700 rounded font-bold">&lt;25%</span> problema
-              </p>
-            </div>
-          )}
+              {!isLoading && performance.length === 0 && (
+                <tr><td colSpan={4} className="px-5 py-10 text-center text-sm text-slate-400">No hay inscripciones para este período.</td></tr>
+              )}
+              {isLoading && (
+                <tr><td colSpan={4} className="px-5 py-10 text-center text-sm text-slate-400">Cargando cursos…</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <section aria-labelledby="journey-heading" className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div className="border-b border-slate-100 p-5 sm:p-6">
+          <h2 id="journey-heading" className="text-lg font-bold text-slate-900">Actividad observada en el sitio</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Sesiones con consentimiento que registraron cada evento. Los pasos no representan necesariamente a las mismas personas; por eso no mostramos una tasa entre pasos.
+          </p>
+        </div>
+        {isLoading ? (
+          <p className="p-6 text-sm text-slate-400">Cargando actividad…</p>
+        ) : (funnelStats?.funnel.length ?? 0) > 0 ? (
+          <ul className="grid grid-cols-1 gap-px bg-slate-100 sm:grid-cols-2 lg:grid-cols-3">
+            {funnelStats?.funnel.map((step) => (
+              <li key={step.step} className="flex items-center justify-between gap-3 bg-white p-4 sm:p-5">
+                <span className="text-sm font-medium text-slate-700">{FUNNEL_STEP_LABELS[step.step] ?? step.step}</span>
+                <span className="shrink-0 text-lg font-bold text-slate-900">{step.uniqueSessions.toLocaleString('es-AR')}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="p-6 text-sm text-slate-400">No hay eventos registrados en este período.</p>
+        )}
+      </section>
+    </main>
   );
 };
 

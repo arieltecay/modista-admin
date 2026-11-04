@@ -36,3 +36,15 @@ export interface CampaignEntry {
 export interface TrafficData {
   topCampaigns: CampaignEntry[];
 }
+
+export interface DashboardData {
+  stats: GeneralStats | null;
+  performance: CoursePerformance[];
+  whatsAppStats: WhatsAppStats | null;
+  traffic: TrafficData | null;
+  funnelStats: FunnelStats | null;
+  isLoading: boolean;
+  isRefreshing: boolean;
+  hasLoadError: boolean;
+  refresh: () => void;
+}

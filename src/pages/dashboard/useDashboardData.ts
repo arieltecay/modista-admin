@@ -3,23 +3,12 @@ import { getTrafficData } from '../../services/analytics/analyticsService';
 import { getDashboardData } from '../../services/dashboard/dashboardService';
 import type {
   CoursePerformance,
+  DashboardData,
   FunnelStats,
   GeneralStats,
   TrafficData,
   WhatsAppStats,
 } from './types';
-
-interface DashboardData {
-  stats: GeneralStats | null;
-  performance: CoursePerformance[];
-  whatsAppStats: WhatsAppStats | null;
-  traffic: TrafficData | null;
-  funnelStats: FunnelStats | null;
-  isLoading: boolean;
-  isRefreshing: boolean;
-  hasLoadError: boolean;
-  refresh: () => void;
-}
 
 export const useDashboardData = (startDate: string, endDate: string): DashboardData => {
   const [stats, setStats] = useState<GeneralStats | null>(null);

@@ -10,8 +10,8 @@ export const SPEC_VERSION = '2.0';
 // Clases (LITERALES: el scanner de Tailwind 4 las detecta en este archivo)
 // ---------------------------------------------------------------------------
 
-export const STRONG_CLASSES = 'font-bold text-foreground';
-export const EM_CLASSES = 'italic text-foreground/90';
+export const STRONG_CLASSES = 'font-bold text-atelier-ink';
+export const EM_CLASSES = 'italic text-atelier-ink/90';
 
 export const LINK_CLASSES =
   'text-pink-600 hover:text-pink-700 underline font-medium decoration-pink-300 transition-colors';

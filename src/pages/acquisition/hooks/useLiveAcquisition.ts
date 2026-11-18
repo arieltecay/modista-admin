@@ -6,7 +6,8 @@ export const POLL_INTERVAL_MS = 15_000;
 
 /** Live activity: reloads every 15 seconds while the tab is visible and pauses while it is hidden. */
 export const useLiveAcquisition = (windowMinutes: number) => {
-  const resource = useReport((signal) => getLive({ windowMinutes }, signal), `live-${windowMinutes}`);
+  // Changing the window keeps the panel (and the focus on its selector) while the new window loads.
+  const resource = useReport((signal) => getLive({ windowMinutes }, signal), `live-${windowMinutes}`, true, 'live');
   const { refresh } = resource;
 
   useEffect(() => {

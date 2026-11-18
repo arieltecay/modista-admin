@@ -21,7 +21,9 @@ export const useAcquisitionReports = (filters: AcquisitionFilters) => {
 
 export const useJourneyList = (filters: AcquisitionFilters, page: number) => {
   const params = toJourneyParams(filters, page, JOURNEYS_PER_PAGE);
-  return useReport((signal) => getJourneys(params, signal), `journeys-${JSON.stringify(params)}`);
+  // Turning the page keeps the table (and the pagination buttons) while the next page loads; new filters reset it.
+  const scope = `journeys-${JSON.stringify(toJourneyParams(filters, 0, JOURNEYS_PER_PAGE))}`;
+  return useReport((signal) => getJourneys(params, signal), `journeys-${JSON.stringify(params)}`, true, scope);
 };
 
 export const useJourneyDetail = (visitId: string | null) =>

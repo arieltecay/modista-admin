@@ -38,4 +38,9 @@ describe('JourneyDetail', () => {
     await userEvent.click(screen.getByRole('button', { name: /cerrar/i }));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('moves focus to its heading when it opens, so keyboard users land on it', () => {
+    setup();
+    expect(screen.getByRole('heading', { name: /recorrido 12345678/i })).toHaveFocus();
+  });
 });

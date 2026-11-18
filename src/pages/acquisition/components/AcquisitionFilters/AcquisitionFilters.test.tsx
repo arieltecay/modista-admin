@@ -45,4 +45,20 @@ describe('AcquisitionFilters', () => {
     await userEvent.click(screen.getByRole('button', { name: /actualizar/i }));
     expect(onRefresh).toHaveBeenCalled();
   });
+
+  it('limits the date inputs to the maximum range', () => {
+    setup({ from: '2026-10-01', to: '2026-10-10' });
+    expect(screen.getByLabelText('Desde')).toHaveAttribute('min', '2026-07-11');
+    expect(screen.getByLabelText('Desde')).toHaveAttribute('max', '2026-10-10');
+    expect(screen.getByLabelText('Hasta')).toHaveAttribute('min', '2026-10-01');
+    expect(screen.getByLabelText('Hasta')).toHaveAttribute('max', '2026-12-31');
+  });
+
+  it('applies a text filter on Enter without losing focus, and syncs it from the URL otherwise', async () => {
+    const { onChange } = setup();
+    const input = screen.getByLabelText('Campaña');
+    await userEvent.type(input, 'black{Enter}');
+    expect(onChange).toHaveBeenLastCalledWith({ campaign: 'black' });
+    expect(input).toHaveFocus();
+  });
 });

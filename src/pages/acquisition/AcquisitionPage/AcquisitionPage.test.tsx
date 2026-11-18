@@ -72,14 +72,44 @@ describe('AcquisitionPage', () => {
     expect(screen.queryByText(/no se pudo cargar/i)).not.toBeInTheDocument();
   });
 
-  it('keeps the previous results out of view while new filters load, and refetches on a filter change', async () => {
+  it('hides the old results while new filters load, then shows the new ones', async () => {
+    let release: (value: unknown) => void = () => {};
+    services.getChannels.mockResolvedValueOnce(channelsResponse()).mockReturnValueOnce(new Promise((resolve) => { release = resolve; }));
     renderPage();
     await screen.findByRole('table', { name: /canales de adquisición/i });
-    const campaign = screen.getByLabelText('Campaña');
-    await userEvent.type(campaign, 'cyber');
+    await userEvent.type(screen.getByLabelText('Campaña'), 'cyber');
     await userEvent.tab();
     await waitFor(() => expect(services.getChannels).toHaveBeenCalledTimes(2));
     expect(services.getChannels.mock.calls[1][0]).toMatchObject({ campaign: 'cyber' });
+    expect(within(section(/canales/i)).queryByRole('table')).not.toBeInTheDocument();
+    expect(within(section(/canales/i)).getByRole('status')).toHaveAttribute('aria-busy', 'true');
+    release(channelsResponse());
+    expect(await within(section(/canales/i)).findByRole('table')).toBeInTheDocument();
+  });
+
+  it('still shows conversions without a linked journey when there are no channels', async () => {
+    const unlinked = { leads: 2, purchases: 1, partialPayments: 0, revenue: 40000 };
+    services.getOverview.mockResolvedValue(overviewResponse({ visits: 0, visitors: 0, attributableVisits: 0, leads: 2, purchases: 1, revenue: 40000, unlinked }));
+    services.getChannels.mockResolvedValue(channelsResponse({ channels: [], unlinked }));
+    renderPage('?reportingMode=event_period');
+    expect(await within(section(/canales/i)).findByText(/sin recorrido enlazable/i)).toBeInTheDocument();
+    expect(within(section(/resumen/i)).getByText(/sin recorrido enlazable/i)).toHaveTextContent(/40\.000/);
+    expect(screen.queryByText(/no hay canales/i)).not.toBeInTheDocument();
+  });
+
+  it('ignores a filter value the API would reject instead of failing every report', async () => {
+    renderPage('?channel=unlinked&from=2026-01-01&to=2026-11-18');
+    await waitFor(() => expect(services.getChannels).toHaveBeenCalled());
+    const params = services.getChannels.mock.calls[0][0];
+    expect(params.channel).toBeUndefined();
+    expect(new Date(params.to).getTime() - new Date(params.from).getTime()).toBeLessThanOrEqual(91 * 86_400_000);
+  });
+
+  it('retrying a failed report shows it loading again', async () => {
+    services.getFunnel.mockRejectedValueOnce(new Error('down')).mockResolvedValueOnce(funnelResponse());
+    renderPage();
+    await userEvent.click(await within(await screen.findByRole('heading', { name: /embudo/i }).then((h) => h.closest('section') as HTMLElement)).findByRole('button', { name: /reintentar/i }));
+    expect(await within(section(/embudo/i)).findByRole('list')).toBeInTheDocument();
   });
 
   it('opens one journey with its full id and shows its timeline', async () => {

@@ -80,4 +80,35 @@ describe('useReport', () => {
     renderHook(() => useReport(load, 'a', false));
     expect(load).not.toHaveBeenCalled();
   });
+
+  it('retrying after a first failure shows loading, not a blank card', async () => {
+    const second = deferred<string>();
+    const load = vi.fn().mockRejectedValueOnce(new Error('down')).mockReturnValueOnce(second.promise);
+    const { result } = renderHook(() => useReport(load, 'a'));
+    await waitFor(() => expect(result.current.hasError).toBe(true));
+    act(() => result.current.refresh());
+    expect(result.current).toMatchObject({ isLoading: true, hasError: false, data: null });
+    await act(async () => { second.resolve('recovered'); });
+    await waitFor(() => expect(result.current.data).toBe('recovered'));
+  });
+
+  it('aborts the request of the filters that were replaced', async () => {
+    const signals: AbortSignal[] = [];
+    const { rerender } = renderHook(({ key }) => useReport((signal) => { signals.push(signal); return new Promise<string>(() => {}); }, key), { initialProps: { key: 'a' } });
+    rerender({ key: 'b' });
+    expect(signals[0].aborted).toBe(true);
+    expect(signals[1].aborted).toBe(false);
+  });
+
+  it('keeps the data while a new key of the same scope loads (pagination, live window)', async () => {
+    const next = deferred<string>();
+    const load = vi.fn().mockResolvedValueOnce('page 1').mockReturnValueOnce(next.promise);
+    const { result, rerender } = renderHook(({ key }) => useReport(load, key, true, 'same-filters'), { initialProps: { key: 'page-1' } });
+    await waitFor(() => expect(result.current.data).toBe('page 1'));
+    rerender({ key: 'page-2' });
+    await waitFor(() => expect(result.current.isRefreshing).toBe(true));
+    expect(result.current).toMatchObject({ data: 'page 1', isLoading: false });
+    await act(async () => { next.resolve('page 2'); });
+    await waitFor(() => expect(result.current.data).toBe('page 2'));
+  });
 });

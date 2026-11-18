@@ -32,7 +32,7 @@ export const QualityPanel = ({ rules, evaluated, capi, identifiers, tracking, ti
             <p className="mt-1 text-sm text-slate-600">{rule.explanation}</p>
             <p className="mt-1 text-sm font-medium text-slate-800">{rule.action}</p>
             {rule.firstOccurrence && rule.lastOccurrence && (
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-slate-500">
                 Entre {formatDateTime(rule.firstOccurrence, timezone)} y {formatDateTime(rule.lastOccurrence, timezone)}
               </p>
             )}
@@ -42,7 +42,7 @@ export const QualityPanel = ({ rules, evaluated, capi, identifiers, tracking, ti
     )}
 
     <div className="grid gap-4 md:grid-cols-2">
-      <section role="region" aria-label="Entrega a Meta (CAPI)" className="rounded-xl bg-slate-50 p-4 text-sm">
+      <section aria-label="Entrega a Meta (CAPI)" className="rounded-xl bg-slate-50 p-4 text-sm">
         <h3 className="mb-2 font-semibold text-slate-800">Entrega a Meta (CAPI)</h3>
         <ul className="grid grid-cols-2 gap-1 text-slate-600">
           <li>Aceptados {formatInteger(capi.accepted)}</li>

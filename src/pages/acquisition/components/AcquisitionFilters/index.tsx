@@ -1,7 +1,9 @@
 import { useId } from 'react';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { MAX_RANGE_DAYS, shiftDays } from '../../utils/filters';
 import { CHANNEL_LABELS, DEVICE_LABELS } from '../../utils/labels';
+import { TextFilter } from './TextFilter';
 import type { AcquisitionFiltersProps, FiltersPatchView, FiltersView } from './types';
 
 const TIMEZONES = ['America/Argentina/Tucuman', 'America/Argentina/Buenos_Aires', 'UTC'];
@@ -31,27 +33,23 @@ export const AcquisitionFilters = ({ filters, onChange, onRefresh, isRefreshing 
         type="date"
         className={CONTROL}
         value={filters[name]}
-        max={name === 'from' ? filters.to : undefined}
-        min={name === 'to' ? filters.from : undefined}
+        // The API answers 400 beyond the maximum range, so the pickers stop short of it.
+        min={name === 'from' ? shiftDays(filters.to, -(MAX_RANGE_DAYS - 1)) : filters.from}
+        max={name === 'from' ? filters.to : shiftDays(filters.from, MAX_RANGE_DAYS - 1)}
         onChange={(event) => event.target.value && onChange({ [name]: event.target.value })}
       />
     ));
-  // Free text is applied when the user leaves the field or presses Enter, not on every keystroke.
-  const text = (name: 'campaign' | 'landing', label: string) => {
-    const apply = (value: string) => onChange({ [name]: value.trim() || undefined });
-    return field(name, label, (
-      <input
-        id={`${id}-${name}`}
-        key={filters[name] ?? ''}
-        type="text"
-        maxLength={120}
-        className={CONTROL}
-        defaultValue={filters[name] ?? ''}
-        onBlur={(event) => apply(event.target.value)}
-        onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => event.key === 'Enter' && apply(event.currentTarget.value)}
-      />
-    ));
-  };
+  const text = (name: 'campaign' | 'landing', label: string) => (
+    <TextFilter
+      key={name}
+      id={`${id}-${name}`}
+      label={label}
+      value={filters[name]}
+      className={FIELD}
+      controlClassName={CONTROL}
+      onApply={(value) => onChange({ [name]: value })}
+    />
+  );
 
   const channels = [['', 'Todos'], ...Object.entries(CHANNEL_LABELS)] as Array<readonly [string, string]>;
   const devices = [['', 'Todos'], ...Object.entries(DEVICE_LABELS)] as Array<readonly [string, string]>;

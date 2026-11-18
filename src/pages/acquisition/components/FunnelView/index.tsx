@@ -25,6 +25,7 @@ export const FunnelView = ({ steps, independentCounts }: FunnelViewProps) => {
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={width}
+                aria-valuetext={formatInteger(step.visits)}
                 className="h-3 overflow-hidden rounded-full bg-slate-100"
               >
                 <div className="h-full rounded-full bg-indigo-500" style={{ width: `${width}%` }} />

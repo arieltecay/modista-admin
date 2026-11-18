@@ -2,7 +2,9 @@ import { formatCurrency, formatDateTime, formatInteger, shortId } from '../../ut
 import { CHANNEL_LABELS, DEVICE_LABELS, journeyStepLabel, labelOf } from '../../utils/labels';
 import type { JourneyTableProps } from './types';
 
-const HEADERS = ['ID', 'Inicio', 'Última actividad', 'Canal', 'Landing', 'Dispositivo', 'Paso máximo', 'Lead', 'Compra', 'Ingresos', ''];
+/** The API only serves up to this page. */
+const MAX_PAGE = 1000;
+const HEADERS = ['ID', 'Inicio', 'Última actividad', 'Canal', 'Landing', 'Dispositivo', 'Paso máximo', 'Lead', 'Compra', 'Ingresos', 'Acciones'];
 
 export const JourneyTable = ({ journeys, pagination, timezone, onSelect, onPageChange }: JourneyTableProps) => (
   <div className="space-y-3">
@@ -10,7 +12,7 @@ export const JourneyTable = ({ journeys, pagination, timezone, onSelect, onPageC
       <table className="min-w-full text-left text-sm">
         <caption className="sr-only">Recorridos de visitantes (identificadores abreviados)</caption>
         <thead className="text-xs uppercase tracking-wide text-slate-500">
-          <tr>{HEADERS.map((header, index) => <th key={`${header}-${index}`} scope="col" className="px-3 py-2 font-semibold">{header}</th>)}</tr>
+          <tr>{HEADERS.map((header, index) => <th key={`${header}-${index}`} scope="col" className="px-3 py-2 font-semibold">{header === 'Acciones' ? <span className="sr-only">{header}</span> : header}</th>)}</tr>
         </thead>
         <tbody className="divide-y divide-slate-100 text-slate-700">
           {journeys.map((journey) => (
@@ -49,7 +51,7 @@ export const JourneyTable = ({ journeys, pagination, timezone, onSelect, onPageC
         <button type="button" disabled={pagination.page <= 1} onClick={() => onPageChange(pagination.page - 1)} className="rounded-lg border border-slate-200 px-3 py-1 disabled:opacity-40">
           Anterior
         </button>
-        <button type="button" disabled={pagination.page >= pagination.totalPages} onClick={() => onPageChange(pagination.page + 1)} className="rounded-lg border border-slate-200 px-3 py-1 disabled:opacity-40">
+        <button type="button" disabled={pagination.page >= Math.min(pagination.totalPages, MAX_PAGE)} onClick={() => onPageChange(pagination.page + 1)} className="rounded-lg border border-slate-200 px-3 py-1 disabled:opacity-40">
           Siguiente
         </button>
       </div>

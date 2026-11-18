@@ -15,6 +15,9 @@ import type { Resource } from '../hooks/useReport';
 import type { FiltersPatch } from '../types';
 import { applyPatch, parseFilters, serializeFilters } from '../utils/filters';
 
+const hasOutcomes = (outcomes: { leads: number; purchases: number; partialPayments: number; revenue: number } | null): boolean =>
+  outcomes !== null && outcomes.leads + outcomes.purchases + outcomes.partialPayments + outcomes.revenue > 0;
+
 /** Props every report card needs, derived from how its request is going. */
 const stateOf = <T,>(resource: Resource<T>) => ({
   isLoading: resource.isLoading,
@@ -42,8 +45,9 @@ const AcquisitionPage = () => {
   const live = useLiveAcquisition(liveWindow);
 
   const changeFilters = (patch: FiltersPatch) => setSearchParams(serializeFilters(applyPatch(filters, patch)), { replace: true });
-  const refreshAll = () => [...Object.values(reports), journeys, live].forEach((resource) => resource.refresh());
-  const isRefreshing = [...Object.values(reports), journeys, live].some((resource) => resource.isRefreshing);
+  const refreshAll = () => [...Object.values(reports), journeys, live, ...(openVisitId ? [journey] : [])].forEach((resource) => resource.refresh());
+  // The live panel refreshes itself every 15 seconds; that must not look like the user's own refresh.
+  const isRefreshing = [...Object.values(reports), journeys].some((resource) => resource.isRefreshing);
 
   const overview = reports.overview.data;
   const channels = reports.channels.data;
@@ -64,7 +68,7 @@ const AcquisitionPage = () => {
 
       <SectionState
         title="Resumen"
-        isEmpty={overview !== null && overview.data.visits === 0 && overview.data.leads === 0 && overview.data.revenue === 0}
+        isEmpty={overview !== null && overview.data.visits === 0 && overview.data.leads === 0 && overview.data.revenue === 0 && !hasOutcomes(overview.data.unlinked)}
         emptyMessage="No hay visitas medibles en este período."
         {...stateOf(reports.overview)}
       >
@@ -81,7 +85,7 @@ const AcquisitionPage = () => {
 
       <SectionState
         title="Canales"
-        isEmpty={channels !== null && channels.data.channels.length === 0}
+        isEmpty={channels !== null && channels.data.channels.length === 0 && !hasOutcomes(channels.data.unlinked)}
         emptyMessage="No hay canales con actividad en este período."
         {...stateOf(reports.channels)}
       >
@@ -122,7 +126,7 @@ const AcquisitionPage = () => {
         )}
         {openVisitId && journey.isLoading && <p role="status" className="text-sm text-slate-500">Cargando recorrido…</p>}
         {openVisitId && journey.hasError && !journey.data && <p role="alert" className="text-sm text-red-700">No se pudo cargar el recorrido.</p>}
-        {openVisitId && journey.data && (
+        {openVisitId && journey.data?.data.visit.visitId === openVisitId && (
           <JourneyDetail detail={journey.data.data} timezone={filters.timezone} onClose={() => setOpenState({ filtersKey, visitId: null })} />
         )}
       </SectionState>

@@ -58,8 +58,8 @@ export const LiveActivity = ({ data, windowMinutes, timezone, onWindowChange }: 
             </ul>
           )}
           <ul className="divide-y divide-slate-100 text-sm">
-            {data.recentEvents.map((event) => (
-              <li key={`${event.at}-${event.visit}-${event.name}`} className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
+            {data.recentEvents.map((event, index) => (
+              <li key={`${event.at}-${event.visit}-${event.name}-${index}`} className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
                 <span className="font-medium text-slate-800">{labelOf(STEP_LABELS, event.name)}</span>
                 <span className="text-xs text-slate-500">
                   {formatMinute(event.at, timezone)} · {event.visit}

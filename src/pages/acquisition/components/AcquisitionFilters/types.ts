@@ -19,3 +19,12 @@ export interface AcquisitionFiltersProps {
   onRefresh: () => void;
   isRefreshing: boolean;
 }
+
+export interface TextFilterProps {
+  id: string;
+  label: string;
+  className: string;
+  controlClassName: string;
+  onApply: (value: string | undefined) => void;
+  value?: string;
+}

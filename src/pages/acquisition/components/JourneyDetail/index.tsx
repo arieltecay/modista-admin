@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { formatCurrency, formatDateTime, shortId } from '../../utils/format';
 import { CHANNEL_LABELS, DEVICE_LABELS, EVENT_SOURCE_LABELS, PAYMENT_STATUS_LABELS, STEP_LABELS, labelOf } from '../../utils/labels';
 import type { JourneyDetailProps } from './types';
@@ -8,6 +9,9 @@ import type { JourneyDetailProps } from './types';
  */
 export const JourneyDetail = ({ detail, timezone, onClose }: JourneyDetailProps) => {
   const { visit } = detail;
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  // Opening a journey sits far from the row that opened it, so keyboard focus follows it.
+  useEffect(() => headingRef.current?.focus(), []);
   const attribution: Array<[string, string | undefined]> = [
     ['Canal', labelOf(CHANNEL_LABELS, visit.channelGroup)],
     ['Plataforma', visit.sourcePlatform],
@@ -24,7 +28,7 @@ export const JourneyDetail = ({ detail, timezone, onClose }: JourneyDetailProps)
   return (
     <div className="space-y-4 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-slate-900">Recorrido {shortId(visit.visitId)}</h3>
+        <h3 ref={headingRef} tabIndex={-1} className="font-semibold text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Recorrido {shortId(visit.visitId)}</h3>
         <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-sm hover:bg-slate-50">
           Cerrar
         </button>
@@ -43,7 +47,7 @@ export const JourneyDetail = ({ detail, timezone, onClose }: JourneyDetailProps)
           <li key={`${event.occurredAt}-${event.name}-${index}`}>
             <span className="mr-2 tabular-nums text-slate-500">{formatDateTime(event.occurredAt, timezone)}</span>
             <span className="font-medium text-slate-900">{labelOf(STEP_LABELS, event.name)}</span>
-            <span className="ml-2 text-xs text-slate-400">({labelOf(EVENT_SOURCE_LABELS, event.source)}){event.path ? ` ${event.path}` : ''}</span>
+            <span className="ml-2 text-xs text-slate-500">({labelOf(EVENT_SOURCE_LABELS, event.source)}){event.path ? ` ${event.path}` : ''}</span>
           </li>
         ))}
       </ol>

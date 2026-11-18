@@ -12,6 +12,7 @@ import {
   XMarkIcon,
   MagnifyingGlassIcon,
   ChatBubbleLeftRightIcon,
+  ChartBarIcon,
   CurrencyDollarIcon,
   RocketLaunchIcon,
   StarIcon // Para testimonios
@@ -21,6 +22,7 @@ import { motion } from 'framer-motion';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
+  { name: 'Adquisición', href: '/admin/acquisition', icon: ChartBarIcon },
   { name: 'Cursos', href: '/admin/courses', icon: BookOpenIcon },
   { name: 'Campañas (LP)', href: '/admin/landings', icon: RocketLaunchIcon },
   { name: 'Inscripciones', href: '/admin/inscriptions', icon: UsersIcon }, 

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as chatService from '../../services/chatService';
 import { faqService } from '../../services/faq/faqService';
-import { FaRobot, FaComments, FaGraduationCap, FaTrash, FaWhatsapp, FaInstagram, FaGlobe } from 'react-icons/fa';
+import { FaRobot, FaComments, FaGraduationCap, FaTrash, FaWhatsapp, FaInstagram, FaGlobe, FaUserCheck } from 'react-icons/fa';
 import ConversationsTab from './tabs/ConversationsTab';
 import TrainingTab from './tabs/TrainingTab';
 import TemplatesTab from './tabs/TemplatesTab';
+import EnrollmentTab from './tabs/EnrollmentTab';
 import GlobalModal from '../../components/shared/GlobalModal';
 import FAQModal from './components/FAQModal';
 import { FAQFormData } from '../faq/types';
@@ -12,7 +13,7 @@ import { notify } from '../../components/shared/Toast';
 import { useNotifications } from '../../context/NotificationContext';
 import { FaCheckDouble } from 'react-icons/fa';
 
-type TabType = 'conversations' | 'training' | 'templates';
+type TabType = 'conversations' | 'training' | 'templates' | 'enrollment';
 
 const BotMessagePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('conversations');
@@ -193,6 +194,12 @@ const BotMessagePage: React.FC = () => {
         >
           <FaWhatsapp /> Plantillas
         </button>
+        <button 
+          onClick={() => setActiveTab('enrollment')}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition-all ${activeTab === 'enrollment' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+        >
+          <FaUserCheck /> Inscripciones
+        </button>
       </div>
 
       {/* Filtro de Plataforma */}
@@ -267,9 +274,13 @@ const BotMessagePage: React.FC = () => {
             <div className="h-full overflow-y-auto custom-scrollbar">
               <TrainingTab />
             </div>
-          ) : (
+          ) : activeTab === 'templates' ? (
             <div className="h-full overflow-y-auto custom-scrollbar">
               <TemplatesTab />
+            </div>
+          ) : (
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <EnrollmentTab />
             </div>
           )}
         </div>

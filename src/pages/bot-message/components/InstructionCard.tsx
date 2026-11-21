@@ -40,6 +40,13 @@ const InstructionCard: React.FC<InstructionCardProps> = ({ instruction, onEdit, 
         {instruction.content}
       </div>
 
+      {instruction.instagramAutoReply && (
+        <p className="mb-3 text-xs text-pink-700">
+          Instagram: {(instruction.instagramKeywords ?? []).join(', ')}
+          {instruction.instagramEnrollmentLookup ? ' · consulta inscripciones' : ''}
+        </p>
+      )}
+
       <div className="flex items-center justify-between mt-auto pt-3 border-t">
         <div className="flex items-center gap-1 text-xs">
           {instruction.isActive ? (

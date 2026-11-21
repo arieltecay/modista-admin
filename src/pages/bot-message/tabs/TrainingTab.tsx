@@ -71,7 +71,7 @@ const TrainingTab: React.FC = () => {
         <FaLightbulb className="mt-1 flex-shrink-0" />
         <div>
           <p className="font-bold text-sm">Consejo de Entrenamiento</p>
-          <p className="text-xs">Divide las instrucciones por temas (Identidad, Ventas, Políticas). El bot unirá todas las secciones activas en orden numérico para formar su "cerebro".</p>
+          <p className="text-xs">En WhatsApp se usan todas las secciones activas. En Instagram solo responde cuando una frase activa un bloque habilitado para ese canal; los demás mensajes quedan para el equipo.</p>
         </div>
       </div>
 

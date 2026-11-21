@@ -4,6 +4,9 @@ export interface BotInstruction {
   content: string;
   order: number;
   isActive: boolean;
+  instagramAutoReply?: boolean;
+  instagramKeywords?: string[];
+  instagramEnrollmentLookup?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -13,4 +16,7 @@ export interface BotInstructionFormData {
   content: string;
   order: number;
   isActive: boolean;
+  instagramAutoReply: boolean;
+  instagramKeywords: string[];
+  instagramEnrollmentLookup: boolean;
 }

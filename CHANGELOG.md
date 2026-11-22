@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Entrenamiento del bot: cada bloque puede responder comentarios públicos de Instagram por mensaje privado (apagado por defecto); Conversaciones distingue comentarios y respuestas privadas.
 - Nueva pestaña "Inscripciones" en Mila AI: interruptor de WhatsApp, textos editables con vista previa y restaurar originales.
 - Entrenamiento del bot: cada bloque puede activarse para Instagram con frases y consulta de inscripciones.
 - Agrega el tablero "Adquisición y conversión" con resumen, canales, embudo, actividad reciente, calidad de datos y recorridos.

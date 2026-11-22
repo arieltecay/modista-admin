@@ -21,4 +21,29 @@ describe('InstructionModal', () => {
       instagramEnrollmentLookup: true,
     }));
   });
+
+  it('enables public comment replies independently of DMs, sharing the trigger phrases', async () => {
+    const onSubmit = vi.fn();
+    render(<InstructionModal isOpen onClose={vi.fn()} onSubmit={onSubmit} loading={false} />);
+
+    await userEvent.type(screen.getByPlaceholderText('Ej: Mensaje de Bienvenida'), 'Curso camisa');
+    await userEvent.type(screen.getByPlaceholderText('Escribe aquí las instrucciones específicas para esta sección...'), 'Empieza el 23.');
+    await userEvent.click(screen.getByLabelText('Responder comentarios públicos por mensaje privado'));
+    expect(screen.getByRole('button', { name: 'Guardar Instrucción' })).toBeDisabled();
+    await userEvent.type(screen.getByLabelText('Frases que activan este bloque'), 'camisa');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar Instrucción' }));
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+      instagramAutoReply: false,
+      instagramCommentReply: true,
+      instagramKeywords: ['camisa'],
+      instagramEnrollmentLookup: false,
+    }));
+  });
+
+  it('keeps comment replies off for blocks created before the feature', () => {
+    render(<InstructionModal isOpen onClose={vi.fn()} onSubmit={vi.fn()} loading={false}
+      instruction={{ _id: '1', title: 'Viejo', content: 'x', order: 1, isActive: true, instagramAutoReply: true, instagramKeywords: ['camisa'] }} />);
+    expect(screen.getByLabelText('Responder comentarios públicos por mensaje privado')).not.toBeChecked();
+  });
 });

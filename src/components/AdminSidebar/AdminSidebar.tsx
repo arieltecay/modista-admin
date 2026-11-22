@@ -14,6 +14,7 @@ import {
   ChatBubbleLeftRightIcon,
   ChartBarIcon,
   CurrencyDollarIcon,
+  DocumentTextIcon,
   RocketLaunchIcon,
   StarIcon // Para testimonios
 } from '@heroicons/react/24/outline';
@@ -26,6 +27,7 @@ const navigation = [
   { name: 'Cursos', href: '/admin/courses', icon: BookOpenIcon },
   { name: 'Campañas (LP)', href: '/admin/landings', icon: RocketLaunchIcon },
   { name: 'Inscripciones', href: '/admin/inscriptions', icon: UsersIcon }, 
+  { name: 'Facturas', href: '/admin/invoices', icon: DocumentTextIcon },
   { name: 'Carrusel', href: '/admin/carousel', icon: ViewColumnsIcon },
   { name: 'Talleres', href: '/admin/workshops', icon: CalendarIcon },
   { name: 'Tarifas', href: '/admin/tariffs', icon: CurrencyDollarIcon },

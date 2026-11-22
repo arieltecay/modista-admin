@@ -40,10 +40,10 @@ const InstructionCard: React.FC<InstructionCardProps> = ({ instruction, onEdit, 
         {instruction.content}
       </div>
 
-      {instruction.instagramAutoReply && (
+      {(instruction.instagramAutoReply || instruction.instagramCommentReply) && (
         <p className="mb-3 text-xs text-pink-700">
-          Instagram: {(instruction.instagramKeywords ?? []).join(', ')}
-          {instruction.instagramEnrollmentLookup ? ' · consulta inscripciones' : ''}
+          Instagram ({[instruction.instagramAutoReply && 'DM', instruction.instagramCommentReply && 'comentarios'].filter(Boolean).join(' + ')}): {(instruction.instagramKeywords ?? []).join(', ')}
+          {instruction.instagramAutoReply && instruction.instagramEnrollmentLookup ? ' · consulta inscripciones' : ''}
         </p>
       )}
 

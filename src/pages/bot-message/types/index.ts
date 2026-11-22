@@ -7,6 +7,7 @@ export interface BotInstruction {
   instagramAutoReply?: boolean;
   instagramKeywords?: string[];
   instagramEnrollmentLookup?: boolean;
+  instagramCommentReply?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -19,4 +20,12 @@ export interface BotInstructionFormData {
   instagramAutoReply: boolean;
   instagramKeywords: string[];
   instagramEnrollmentLookup: boolean;
+  instagramCommentReply: boolean;
+}
+
+/** Campos de un mensaje de conversación que cambian cómo se muestra. Sin `kind` es un mensaje directo. */
+export interface ConversationEventInfo {
+  direction: 'inbound' | 'outbound';
+  kind?: 'comment' | 'private_reply';
+  status?: string;
 }

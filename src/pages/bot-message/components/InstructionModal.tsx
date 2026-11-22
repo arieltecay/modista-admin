@@ -25,7 +25,8 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
     isActive: true,
     instagramAutoReply: false,
     instagramKeywords: [],
-    instagramEnrollmentLookup: false
+    instagramEnrollmentLookup: false,
+    instagramCommentReply: false
   });
   const [keywordText, setKeywordText] = useState('');
 
@@ -38,7 +39,8 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
         isActive: instruction.isActive,
         instagramAutoReply: instruction.instagramAutoReply ?? false,
         instagramKeywords: instruction.instagramKeywords ?? [],
-        instagramEnrollmentLookup: instruction.instagramEnrollmentLookup ?? false
+        instagramEnrollmentLookup: instruction.instagramEnrollmentLookup ?? false,
+        instagramCommentReply: instruction.instagramCommentReply ?? false
       });
       setKeywordText((instruction.instagramKeywords ?? []).join(', '));
     } else {
@@ -49,11 +51,15 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
         isActive: true,
         instagramAutoReply: false,
         instagramKeywords: [],
-        instagramEnrollmentLookup: false
+        instagramEnrollmentLookup: false,
+        instagramCommentReply: false
       });
       setKeywordText('');
     }
   }, [instruction, isOpen]);
+
+  const hasKeywords = keywordText.split(/[,\n]/).some(value => value.trim().length >= 3);
+  const needsKeywords = formData.instagramAutoReply || formData.instagramCommentReply;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +83,7 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={loading || !formData.title.trim() || !formData.content.trim() || (formData.instagramAutoReply && !keywordText.split(/[,\n]/).some(value => value.trim().length >= 3))}
+            disabled={loading || !formData.title.trim() || !formData.content.trim() || (needsKeywords && !hasKeywords)}
             className="inline-flex w-full justify-center rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto disabled:opacity-50 flex items-center gap-2"
           >
             <FaSave /> {loading ? 'Guardando...' : 'Guardar Instrucción'}
@@ -146,16 +152,23 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
             <input type="checkbox" checked={formData.instagramAutoReply} onChange={e => setFormData({ ...formData, instagramAutoReply: e.target.checked })} />
             Permitir que este bloque responda en Instagram
           </label>
-          {formData.instagramAutoReply && (
+          <label className="flex items-center gap-3 text-sm font-medium text-pink-900">
+            <input type="checkbox" checked={formData.instagramCommentReply} onChange={e => setFormData({ ...formData, instagramCommentReply: e.target.checked })} />
+            Responder comentarios públicos por mensaje privado
+          </label>
+          {formData.instagramCommentReply && <p className="text-xs text-gray-600">Si el comentario contiene una frase, Mila envía un único mensaje privado (hasta 7 días después del comentario). Los comentarios sin coincidencia quedan en Conversaciones. Nunca incluye datos de inscripciones.</p>}
+          {needsKeywords && (
             <>
               <label className="block text-sm font-medium text-gray-800" htmlFor="instagramKeywords">Frases que activan este bloque</label>
               <textarea id="instagramKeywords" value={keywordText} onChange={e => setKeywordText(e.target.value)} rows={2} placeholder="camisa, cuellos, fecha del curso (mínimo 3 letras)" className="w-full rounded-xl border border-gray-200 p-3 text-sm" />
               <p className="text-xs text-gray-600">Separá las frases con comas o saltos de línea. Solo el contenido de los bloques coincidentes se envía a Gemini.</p>
+              {formData.instagramAutoReply && (<>
               <label className="flex items-center gap-3 text-sm text-pink-900">
                 <input type="checkbox" checked={formData.instagramEnrollmentLookup} onChange={e => setFormData({ ...formData, instagramEnrollmentLookup: e.target.checked })} />
                 Permitir consulta de inscripciones en este tema
               </label>
               {formData.instagramEnrollmentLookup && <p className="text-xs text-amber-800">La consulta compara email y celular, pero no verifica por un segundo factor. Se muestra solo curso y estado registrado.</p>}
+              </>)}
             </>
           )}
         </div>

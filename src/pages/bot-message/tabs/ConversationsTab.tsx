@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getMessageKindLabel } from '../utils/messageKind';
 import { FaPaperPlane, FaRobot, FaUserEdit, FaTrash, FaArrowLeft, FaWhatsapp, FaInstagram } from 'react-icons/fa';
 
 interface ConversationsTabProps {
@@ -108,6 +109,11 @@ const ConversationsTab: React.FC<ConversationsTabProps> = ({
                 <div key={msg._id} className={`flex ${msg.direction === 'inbound' ? 'justify-start' : 'justify-end'}`}>
                   <div className={`max-w-[80%] group relative`}>
                     <div className={`p-3 rounded-2xl shadow-sm ${msg.direction === 'inbound' ? 'bg-white text-gray-800 rounded-tl-none border' : 'bg-indigo-600 text-white rounded-tr-none'}`}>
+                      {getMessageKindLabel(msg) && (
+                        <p className={`mb-1 text-[10px] font-bold uppercase tracking-wide ${msg.status === 'failed' ? 'text-red-300' : msg.direction === 'inbound' ? 'text-pink-600' : 'text-pink-200'}`}>
+                          {getMessageKindLabel(msg)}
+                        </p>
+                      )}
                       {msg.body}
                     </div>
                     <div className="flex items-center justify-between gap-4 mt-1 px-1">

@@ -16,7 +16,8 @@ import {
   CurrencyDollarIcon,
   DocumentTextIcon,
   RocketLaunchIcon,
-  StarIcon // Para testimonios
+  StarIcon, // Para testimonios
+  TicketIcon
 } from '@heroicons/react/24/outline';
 import { AdminSidebarProps } from './types';
 import { motion } from 'framer-motion';
@@ -28,6 +29,7 @@ const navigation = [
   { name: 'Campañas (LP)', href: '/admin/landings', icon: RocketLaunchIcon },
   { name: 'Inscripciones', href: '/admin/inscriptions', icon: UsersIcon }, 
   { name: 'Facturas', href: '/admin/invoices', icon: DocumentTextIcon },
+  { name: 'Cuponera', href: '/admin/coupons', icon: TicketIcon },
   { name: 'Carrusel', href: '/admin/carousel', icon: ViewColumnsIcon },
   { name: 'Talleres', href: '/admin/workshops', icon: CalendarIcon },
   { name: 'Tarifas', href: '/admin/tariffs', icon: CurrencyDollarIcon },

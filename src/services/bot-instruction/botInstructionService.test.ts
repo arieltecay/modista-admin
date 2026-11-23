@@ -14,6 +14,8 @@ const data = {
   instagramKeywords: [],
   instagramEnrollmentLookup: false,
   instagramCommentReply: false,
+  instagramResponseMode: 'fixed' as const,
+  instagramFixedResponse: 'Hola 👋\nAtendemos de 9 a 18.',
 };
 
 describe('botInstructionService contract', () => {

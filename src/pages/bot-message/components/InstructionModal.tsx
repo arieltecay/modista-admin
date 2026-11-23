@@ -2,12 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { BotInstruction, BotInstructionFormData } from '../types';
 import { FaSave } from 'react-icons/fa';
 import GlobalModal from '../../../components/shared/GlobalModal';
+import { ResponseModeField } from './ResponseModeField';
+import { fixedReplyIssue } from '../utils/fixedReply';
 
 /** An emptied number field gives NaN; the API only accepts integers from 0. */
 const toOrder = (value: string) => {
   const parsed = Number.parseInt(value, 10);
   return Number.isNaN(parsed) ? 0 : Math.max(0, parsed);
 };
+
+const EMPTY_FORM: BotInstructionFormData = {
+  title: '',
+  content: '',
+  order: 0,
+  isActive: true,
+  instagramAutoReply: false,
+  instagramKeywords: [],
+  instagramEnrollmentLookup: false,
+  instagramCommentReply: false,
+  instagramResponseMode: 'gemini',
+  instagramFixedResponse: '',
+};
+
+const toForm = (instruction: BotInstruction): BotInstructionFormData => ({
+  title: instruction.title,
+  content: instruction.content,
+  order: instruction.order,
+  isActive: instruction.isActive,
+  instagramAutoReply: instruction.instagramAutoReply ?? false,
+  instagramKeywords: instruction.instagramKeywords ?? [],
+  instagramEnrollmentLookup: instruction.instagramEnrollmentLookup ?? false,
+  instagramCommentReply: instruction.instagramCommentReply ?? false,
+  instagramResponseMode: instruction.instagramResponseMode === 'fixed' ? 'fixed' : 'gemini',
+  instagramFixedResponse: instruction.instagramFixedResponse ?? '',
+});
 
 interface InstructionModalProps {
   isOpen: boolean;
@@ -24,53 +52,28 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
   instruction,
   loading
 }) => {
-  const [formData, setFormData] = useState<BotInstructionFormData>({
-    title: '',
-    content: '',
-    order: 0,
-    isActive: true,
-    instagramAutoReply: false,
-    instagramKeywords: [],
-    instagramEnrollmentLookup: false,
-    instagramCommentReply: false
-  });
+  const [formData, setFormData] = useState<BotInstructionFormData>(EMPTY_FORM);
   const [keywordText, setKeywordText] = useState('');
 
   useEffect(() => {
-    if (instruction) {
-      setFormData({
-        title: instruction.title,
-        content: instruction.content,
-        order: instruction.order,
-        isActive: instruction.isActive,
-        instagramAutoReply: instruction.instagramAutoReply ?? false,
-        instagramKeywords: instruction.instagramKeywords ?? [],
-        instagramEnrollmentLookup: instruction.instagramEnrollmentLookup ?? false,
-        instagramCommentReply: instruction.instagramCommentReply ?? false
-      });
-      setKeywordText((instruction.instagramKeywords ?? []).join(', '));
-    } else {
-      setFormData({
-        title: '',
-        content: '',
-        order: 0,
-        isActive: true,
-        instagramAutoReply: false,
-        instagramKeywords: [],
-        instagramEnrollmentLookup: false,
-        instagramCommentReply: false
-      });
-      setKeywordText('');
-    }
+    setFormData(instruction ? toForm(instruction) : EMPTY_FORM);
+    setKeywordText((instruction?.instagramKeywords ?? []).join(', '));
   }, [instruction, isOpen]);
 
   const hasKeywords = keywordText.split(/[,\n]/).some(value => value.trim().length >= 3);
   const needsKeywords = formData.instagramAutoReply || formData.instagramCommentReply;
+  const isFixed = formData.instagramResponseMode === 'fixed';
+  const fixedIssue = fixedReplyIssue(formData.instagramFixedResponse);
+  // The API checks the length in any mode (the text is kept in Gemini mode), but only needs a text in fixed mode.
+  const fixedReplyBlocked = isFixed ? fixedIssue !== undefined : fixedIssue === 'tooLong';
+  // Stay visible while it can block saving, even with Instagram turned off, so the reason is never hidden.
+  const showResponseMode = needsKeywords || fixedReplyBlocked;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const instagramKeywords = [...new Set(keywordText.split(/[,\n]/).map(value => value.trim()).filter(value => value.length >= 3))];
-    onSubmit({ ...formData, instagramKeywords });
+    // The API rejects a fixed reply that also looks up enrollments: that lookup only works when Mila writes.
+    onSubmit({ ...formData, instagramKeywords, instagramEnrollmentLookup: !isFixed && formData.instagramEnrollmentLookup });
   };
 
   return (
@@ -89,7 +92,7 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={loading || !formData.title.trim() || !formData.content.trim() || (needsKeywords && !hasKeywords)}
+            disabled={loading || !formData.title.trim() || !formData.content.trim() || (needsKeywords && !hasKeywords) || fixedReplyBlocked}
             className="inline-flex w-full justify-center rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto disabled:opacity-50 flex items-center gap-2"
           >
             <FaSave aria-hidden="true" /> {loading ? 'Guardando...' : 'Guardar regla'}
@@ -172,8 +175,8 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
             <>
               <label className="block text-sm font-medium text-gray-800" htmlFor="instagramKeywords">Frases que activan este bloque</label>
               <textarea id="instagramKeywords" value={keywordText} onChange={e => setKeywordText(e.target.value)} rows={2} placeholder="camisa, cuellos, fecha del curso (mínimo 3 letras)" className="w-full rounded-xl border border-gray-200 p-3 text-sm" />
-              <p className="text-xs text-gray-600">Separá las frases con comas o saltos de línea. Solo el contenido de los bloques coincidentes se envía a Gemini.</p>
-              {formData.instagramAutoReply && (<>
+              <p className="text-xs text-gray-600">Separá las frases con comas o saltos de línea. En modo Gemini, solo el contenido de los bloques coincidentes se envía a Gemini.</p>
+              {formData.instagramAutoReply && !isFixed && (<>
               <label className="flex items-center gap-3 text-sm text-pink-900">
                 <input type="checkbox" checked={formData.instagramEnrollmentLookup} onChange={e => setFormData({ ...formData, instagramEnrollmentLookup: e.target.checked })} />
                 Permitir consulta de inscripciones en este tema
@@ -182,6 +185,15 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
               </>)}
             </>
           )}
+          {showResponseMode && (
+            <ResponseModeField
+              mode={formData.instagramResponseMode}
+              fixedResponse={formData.instagramFixedResponse}
+              onModeChange={instagramResponseMode => setFormData({ ...formData, instagramResponseMode })}
+              onFixedResponseChange={instagramFixedResponse => setFormData({ ...formData, instagramFixedResponse })}
+            />
+          )}
+          {formData.instagramAutoReply && isFixed && <p className="text-xs text-gray-600">La consulta de inscripciones solo funciona cuando Mila redacta con Gemini.</p>}
         </div>
       </form>
     </GlobalModal>

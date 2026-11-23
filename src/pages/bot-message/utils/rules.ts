@@ -19,6 +19,8 @@ export const toInstructions = (data: unknown): BotInstruction[] =>
           instagramKeywords: asKeywords(row.instagramKeywords),
           instagramEnrollmentLookup: row.instagramEnrollmentLookup === true,
           instagramCommentReply: row.instagramCommentReply === true,
+          instagramResponseMode: row.instagramResponseMode === 'fixed' ? 'fixed' as const : 'gemini' as const,
+          instagramFixedResponse: asText(row.instagramFixedResponse),
         }];
       })
     : [];

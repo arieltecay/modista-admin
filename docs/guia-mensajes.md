@@ -16,6 +16,7 @@ Cómo funciona la sección, qué cambió en cada PR y cómo se ve. Datos de las 
 - **WhatsApp:** usa todos los bloques activos, más FAQ y cursos.
 - **Instagram (mensaje directo):** solo si la regla tiene "Permitir que este bloque responda en Instagram" y una de sus frases aparece en el mensaje. Si nada coincide, el mensaje queda para el equipo.
 - **Instagram (comentario):** solo si la regla tiene "Responder comentarios públicos por mensaje privado" y coincide una frase. La respuesta va **por mensaje privado**, una vez por comentario. No hay respuesta pública bajo la publicación.
+- **Respuesta fija (opcional por regla):** en "Cómo responde en Instagram" se elige "Enviar respuesta fija" y se escribe el "Mensaje que se enviará". Cuando coincide una frase, ese texto sale tal cual, sin Gemini (en DM y en la respuesta privada a comentarios). Si coinciden varias reglas fijas gana la de menor orden; una regla fija gana sobre las de Gemini. Una regla fija puede tener también la consulta de inscripciones: en mensajes directos, las preguntas sobre el estado de una inscripción usan la consulta y las demás reciben el texto fijo. En WhatsApp nada cambia: Mila usa "Lo que sabe Mila".
 - Las frases no distinguen mayúsculas ni acentos y buscan el inicio de palabra: "curso" también activa con "cursos".
 
 ### Límites que la pantalla no puede saltear
@@ -95,3 +96,14 @@ Misma ruta, mismos servicios, mismos payloads: lo prueban las 17 pruebas de cont
 ### Sigue fuera de alcance (requiere cambios de API)
 
 Respuesta pública bajo la publicación, elegir publicación, prioridad entre reglas, palabras clave en WhatsApp, estado de conexión con Meta, métricas del bot, estados "entregado/leído" y el doble guardado del envío manual de WhatsApp (`api/controllers/chat/chatController.ts:80`).
+
+## Respuesta fija en Instagram
+
+Misma ruta y mismos servicios; el formulario agrega dos campos (`instagramResponseMode`, `instagramFixedResponse`) que la API nueva valida. Las reglas existentes quedan en "Mila redacta con Gemini".
+
+| Formulario de la regla | En el celular |
+|---|---|
+| ![Respuesta fija](screens/despues/desktop-6-respuesta-fija.png) | ![Respuesta fija móvil](screens/despues/mobile-6-respuesta-fija.png) |
+
+La tarjeta de la regla muestra "Respuesta fija en Instagram" con el texto y "Se envía tal cual, sin Gemini" (ver `screens/despues/desktop-3-respuestas.png`).
+

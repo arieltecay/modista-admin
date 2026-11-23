@@ -9,6 +9,9 @@ export interface RuleCardData {
   instagramComments: boolean;
   enrollmentLookup: boolean;
   keywords: string[];
+  /** On Instagram: 'fixed' sends `fixedResponse` word for word; 'gemini' lets Mila write from `content`. */
+  replyMode: 'gemini' | 'fixed';
+  fixedResponse: string;
 }
 
 export interface RuleCardProps {

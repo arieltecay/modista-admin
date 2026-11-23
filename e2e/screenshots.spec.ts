@@ -34,6 +34,13 @@ test('captures the inbox, a conversation and every tab', async ({ page }, info) 
     await page.screenshot({ path: shot(`${index + 3}-${name}`, info.project.name), fullPage: true, animations: 'disabled' });
   }
 
+  await page.getByRole('tab', { name: 'Respuestas automáticas' }).click();
+  await page.getByRole('button', { name: 'Editar regla Precio del curso' }).click();
+  // The dialog scrolls on its own: bring the reply mode into view instead of a full-page shot.
+  await page.getByText('Cómo responde en Instagram').scrollIntoViewIfNeeded();
+  await page.getByLabel('Mensaje que se enviará').waitFor();
+  await page.screenshot({ path: shot('6-respuesta-fija', info.project.name), animations: 'disabled' });
+
   // Screenshots of a page that called an unknown route would show 404 errors as if they were the design.
   expect(api.unexpected).toEqual([]);
   expect(api.blocked).toEqual([]);

@@ -8,6 +8,9 @@ export interface BotInstruction {
   instagramKeywords?: string[];
   instagramEnrollmentLookup?: boolean;
   instagramCommentReply?: boolean;
+  /** Missing on rules saved before the option existed: read as 'gemini'. */
+  instagramResponseMode?: 'gemini' | 'fixed';
+  instagramFixedResponse?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -21,6 +24,9 @@ export interface BotInstructionFormData {
   instagramKeywords: string[];
   instagramEnrollmentLookup: boolean;
   instagramCommentReply: boolean;
+  instagramResponseMode: 'gemini' | 'fixed';
+  /** Kept while the rule is in Gemini mode, so switching back does not lose it. */
+  instagramFixedResponse: string;
 }
 
 /** Campos de un mensaje de conversación que cambian cómo se muestra. Sin `kind` es un mensaje directo. */

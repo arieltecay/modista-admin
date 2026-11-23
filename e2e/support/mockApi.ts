@@ -1,6 +1,6 @@
 import type { Page, Request } from '@playwright/test';
 import { DEV_SERVER_ORIGIN, MOCK_API_ORIGIN } from './origins';
-import { chats, enrollmentConfig, instruction, messages, templates } from '../../src/test/fixtures/botMessage';
+import { chats, enrollmentConfig, fixedInstruction, instruction, messages, templates } from '../../src/test/fixtures/botMessage';
 
 /** A request the page sent to the fake API, as `METHOD /path`, plus its JSON body. */
 interface RecordedCall {
@@ -28,7 +28,8 @@ const SEND_PATH = /^\/api\/chat\/(whatsapp|instagram)\/[^/]+\/messages$/;
 /** Every call the Messages section makes today, with the fake answer. Anything else is unexpected. */
 const answer = (method: string, path: string): unknown => {
   if (method === 'GET' && path === '/api/chat') return chats;
-  if (method === 'GET' && path === '/api/chat/instructions') return [instruction];
+  if (method === 'GET' && path === '/api/chat/instructions') return [instruction, fixedInstruction];
+  if (method === 'PUT' && /^\/api\/chat\/instructions\/[^/]+$/.test(path)) return instruction;
   if (method === 'GET' && path === '/api/chat/enrollment-config') return enrollmentConfig;
   if (method === 'GET' && path === '/api/notifications/whatsapp/templates') return templates;
   if (method === 'GET' && path === '/api/dashboard/unread-messages') return { unreadCount: 2 };

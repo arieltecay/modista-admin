@@ -43,6 +43,21 @@ export const instruction = {
   instagramCommentReply: false,
 };
 
+/** A rule that sends the same text on Instagram, without Gemini. Fictional data. */
+export const fixedInstruction = {
+  _id: 'i2',
+  title: 'Precio del curso',
+  content: 'El curso de camisa cuesta lo que figura en la web.',
+  order: 2,
+  isActive: true,
+  instagramAutoReply: true,
+  instagramKeywords: ['precio', 'cuánto sale'],
+  instagramEnrollmentLookup: false,
+  instagramCommentReply: true,
+  instagramResponseMode: 'fixed',
+  instagramFixedResponse: '¡Hola! 👋\nEl precio y las fechas están en la web del curso. Si querés, te ayudamos a inscribirte por acá.',
+};
+
 export const template = (name: string, status: string) => ({
   id: name,
   name,

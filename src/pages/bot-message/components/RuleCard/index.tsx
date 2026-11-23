@@ -13,6 +13,7 @@ const channelsOf = (rule: RuleCardData) =>
 /** One automatic-reply rule: where it answers, what triggers it and what Mila knows from it. */
 export const RuleCard = ({ rule, onEdit, onDelete }: RuleCardProps) => {
   const titleId = useId();
+  const sendsFixed = rule.replyMode === 'fixed' && (rule.instagramDirect || rule.instagramComments);
   return (
     <article aria-labelledby={titleId} className={`flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm ${rule.isActive ? 'border-slate-200' : 'border-dashed border-slate-300 opacity-75'}`}>
       <header className="flex items-start justify-between gap-2">
@@ -47,10 +48,18 @@ export const RuleCard = ({ rule, onEdit, onDelete }: RuleCardProps) => {
         </div>
       )}
 
+      {sendsFixed && (
+        <div className="rounded-xl border border-pink-200 bg-pink-50 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-pink-800">Respuesta fija en Instagram</p>
+          <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-slate-800">{rule.fixedResponse}</p>
+          <p className="mt-2 text-xs text-pink-800">Se envía tal cual, sin Gemini.</p>
+        </div>
+      )}
+
       <div className="rounded-xl bg-slate-50 p-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lo que sabe Mila</p>
         <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-slate-700">{rule.content}</p>
-        <p className="mt-2 text-xs text-slate-500">Mila redacta con este texto; no lo envía tal cual.</p>
+        <p className="mt-2 text-xs text-slate-500">{sendsFixed ? 'Mila lo usa en WhatsApp; en Instagram se envía la respuesta fija.' : 'Mila redacta con este texto; no lo envía tal cual.'}</p>
       </div>
 
       <footer className="mt-auto flex justify-end gap-2">

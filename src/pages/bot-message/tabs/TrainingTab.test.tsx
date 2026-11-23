@@ -63,6 +63,22 @@ describe('TrainingTab (Respuestas automáticas)', () => {
     expect(within(card).getByText(/Mila redacta con este texto; no lo envía tal cual/)).toBeInTheDocument();
   });
 
+  it('tells a fixed Instagram reply apart from a rule Mila writes from', async () => {
+    service.getInstructions.mockResolvedValue([
+      instruction,
+      { ...instruction, _id: 'i2', title: 'Precios', instagramResponseMode: 'fixed', instagramFixedResponse: 'El precio está en la web', instagramEnrollmentLookup: true },
+    ]);
+    await renderLoaded();
+
+    const fixed = screen.getByRole('article', { name: 'Precios' });
+    expect(within(fixed).getByText('Respuesta fija en Instagram')).toBeInTheDocument();
+    expect(within(fixed).getByText('El precio está en la web')).toBeInTheDocument();
+    expect(within(fixed).getByText(/Se envía tal cual, sin Gemini/)).toBeInTheDocument();
+    expect(within(fixed).getByText('Puede consultar inscripciones por Instagram.')).toBeInTheDocument();
+    expect(within(rule()).queryByText('Respuesta fija en Instagram')).not.toBeInTheDocument();
+    expect(within(rule()).getByText(/Mila redacta con este texto; no lo envía tal cual/)).toBeInTheDocument();
+  });
+
   it('creates a rule with the current payload and reloads the list', async () => {
     const user = await renderLoaded();
 
@@ -80,6 +96,8 @@ describe('TrainingTab (Respuestas automáticas)', () => {
         instagramKeywords: [],
         instagramEnrollmentLookup: false,
         instagramCommentReply: false,
+        instagramResponseMode: 'gemini',
+        instagramFixedResponse: '',
       }),
     );
     expect(service.getInstructions).toHaveBeenCalledTimes(2);
@@ -93,7 +111,7 @@ describe('TrainingTab (Respuestas automáticas)', () => {
     await user.click(save());
 
     const { _id, ...fields } = instruction;
-    await waitFor(() => expect(service.updateInstruction).toHaveBeenCalledWith(_id, fields));
+    await waitFor(() => expect(service.updateInstruction).toHaveBeenCalledWith(_id, { ...fields, instagramResponseMode: 'gemini', instagramFixedResponse: '' }));
     expect(notify.success).toHaveBeenCalledWith('Instrucción actualizada');
   });
 

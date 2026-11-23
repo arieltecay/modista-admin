@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Rediseña "Mensajes": Bandeja con búsqueda, reglas de respuesta automática explicadas por canal, plantillas y confirmaciones accesibles, usable en celular. Mismas llamadas al API.
 - Mensajes: pruebas de página y en navegador (escritorio y móvil) que fijan el comportamiento actual, más revisión multiagente en `.ai-review/`.
 - Agrega "Facturas": listado con filtros, ver/imprimir, reenviar el mail y reintentar las pendientes o con error.
 - Entrenamiento del bot: cada bloque puede responder comentarios públicos de Instagram por mensaje privado (apagado por defecto); Conversaciones distingue comentarios y respuestas privadas.

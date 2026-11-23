@@ -1,175 +1,126 @@
-import React, { useState } from 'react';
-import { getMessageKindLabel } from '../utils/messageKind';
-import { FaPaperPlane, FaRobot, FaUserEdit, FaTrash, FaArrowLeft, FaWhatsapp, FaInstagram } from 'react-icons/fa';
+import { useMemo, useState } from 'react';
+import { faqService } from '../../../services/faq/faqService';
+import { notify } from '../../../components/shared/Toast';
+import { useNotifications } from '../../../context/NotificationContext';
+import FAQModal from '../components/FAQModal';
+import { ChatList } from '../components/ChatList';
+import { ChatThread } from '../components/ChatThread';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useChatList } from '../hooks/useChatList';
+import { useChatThread } from '../hooks/useChatThread';
+import { toListEntries, toThreadMessages, matchesFilters } from '../utils/inboxView';
+import { channelLabel, fullChatId } from '../utils/channels';
+import type { ChannelFilter, ConversationsTabProps, InboxDialog } from './types';
 
-interface ConversationsTabProps {
-  chats: any[];
-  selectedChat: any;
-  messages: any[];
-  newMessage: string;
-  loading: boolean;
-  onSelectChat: (chat: any) => void;
-  onSendMessage: (e: React.FormEvent) => void;
-  onNewMessageChange: (val: string) => void;
-  onConvertToFAQ: (text: string) => void;
-  onDeleteMessage: (id: string) => void;
-  onClearChat: () => void;
-  messagesEndRef: React.RefObject<HTMLDivElement | null>;
-}
+const COMMENT_ONLY_REASON =
+  'Esta persona solo comentó una publicación. Instagram no permite responderle a mano hasta que te escriba por mensaje directo.';
 
-const ConversationsTab: React.FC<ConversationsTabProps> = ({
-  chats,
-  selectedChat,
-  messages,
-  newMessage,
-  loading,
-  onSelectChat,
-  onSendMessage,
-  onNewMessageChange,
-  onConvertToFAQ,
-  onDeleteMessage,
-  onClearChat,
-  messagesEndRef
-}) => {
-  const [showChatList, setShowChatList] = useState(true);
+/** Inbox: conversation list + open conversation. Stays mounted while hidden so selection and drafts survive tab changes. */
+const ConversationsTab = ({ active }: ConversationsTabProps) => {
+  const { refreshUnreadCount } = useNotifications();
+  const list = useChatList(active, refreshUnreadCount);
+  const thread = useChatThread(list.reload);
+  const [filter, setFilter] = useState<ChannelFilter>('all');
+  const [query, setQuery] = useState('');
+  const [showList, setShowList] = useState(true);
+  const [dialog, setDialog] = useState<InboxDialog>(null);
+  const [busy, setBusy] = useState(false);
 
+  const entries = useMemo(() => toListEntries(list.chats.filter(chat => matchesFilters(chat, filter, query))), [filter, list.chats, query]);
+  const threadMessages = useMemo(() => toThreadMessages(thread.messages), [thread.messages]);
+  const selected = thread.selected;
+
+  const selectByKey = (key: string) => {
+    const chat = list.chats.find(item => item.key === key);
+    if (!chat) return;
+    thread.select(chat);
+    setShowList(false);
+  };
+
+  const changeFilter = (next: ChannelFilter) => {
+    setFilter(next);
+    thread.close();
+    setShowList(true);
+  };
+
+  /** Runs a dialog action; the dialog closes only when the action worked. */
+  const run = async (action: () => Promise<boolean>) => {
+    setBusy(true);
+    try {
+      if (await action()) setDialog(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveFaq = async (data: Parameters<typeof faqService.createFAQ>[0]) =>
+    run(async () => {
+      try {
+        await faqService.createFAQ(data);
+        notify.success('Mila ha aprendido algo nuevo.');
+        return true;
+      } catch {
+        notify.error('Error al crear la FAQ');
+        return false;
+      }
+    });
+
+  const close = () => setDialog(null);
   return (
-    <div className="flex gap-6 h-full">
-      {/* Sidebar de Chats */}
-      <div className={`${showChatList ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-1/3 bg-white border rounded-xl shadow-sm overflow-hidden`}>
-        <div className="p-4 border-b bg-gray-50 font-semibold text-gray-700">Conversaciones Recientes</div>
-        <div className="flex-1 overflow-y-auto">
-          {chats.map((chat: any) => (
-            <div 
-              key={`${chat._id.platform}-${chat._id.platform_id}`}
-              onClick={() => { onSelectChat(chat); setShowChatList(false); }}
-              className={`p-4 border-b cursor-pointer transition-colors hover:bg-indigo-50 ${selectedChat?._id.platform_id === chat._id.platform_id ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : chat.unreadCount > 0 ? 'bg-gray-100' : ''}`}
-            >
-              <div className="flex justify-between items-start mb-1">
-                <div className="flex items-center gap-2">
-                  {chat._id.platform === 'instagram' ? (
-                    <FaInstagram className="text-pink-500 text-xs" />
-                  ) : (
-                    <FaWhatsapp className="text-green-600 text-xs" />
-                  )}
-                  <p className="font-bold text-indigo-900 text-sm">
-                    {chat._id.platform === 'whatsapp' ? '+' : ''}{chat._id.platform_id.length > 15 
-                      ? `...${chat._id.platform_id.slice(-12)}` 
-                      : chat._id.platform_id}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {chat.unreadCount > 0 && (
-                    <span className="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                      {chat.unreadCount}
-                    </span>
-                  )}
-                  <span className="text-[10px] text-gray-400">{new Date(chat.lastTimestamp).toLocaleTimeString()}</span>
-                </div>
-              </div>
-              <p className="text-sm text-gray-500 truncate pl-5">{chat.lastMessage}</p>
-            </div>
-          ))}
-        </div>
+    <div className="grid h-full min-h-0 gap-4 md:grid-cols-[minmax(16rem,22rem)_1fr]">
+      <div className={`${showList ? 'block' : 'hidden'} min-h-0 md:block`}>
+        <ChatList
+          items={entries}
+          status={list.status}
+          selectedKey={selected?.key ?? null}
+          filter={filter}
+          query={query}
+          markingAllRead={list.markingAllRead}
+          filtered={list.chats.length > 0}
+          onFilterChange={changeFilter}
+          onQueryChange={setQuery}
+          onSelect={selectByKey}
+          onRetry={list.reload}
+          onMarkAllRead={list.markAllAsRead}
+        />
+      </div>
+      <div className={`${showList ? 'hidden' : 'block'} h-[70vh] min-h-0 md:block md:h-full`}>
+        <ChatThread
+          title={selected ? fullChatId(selected.platform, selected.platformId) : null}
+          channel={selected ? channelLabel(selected.platform) : ''}
+          messages={threadMessages}
+          status={thread.messagesStatus}
+          draft={thread.draft}
+          sending={thread.sending}
+          onDraftChange={thread.setDraft}
+          onSend={thread.send}
+          onBack={() => setShowList(true)}
+          onClear={() => setDialog({ type: 'clear' })}
+          onDeleteMessage={id => setDialog({ type: 'delete', id })}
+          onSaveAsFaq={question => setDialog({ type: 'faq', question })}
+          replyBlockedReason={thread.canReply ? undefined : COMMENT_ONLY_REASON}
+        />
       </div>
 
-      {/* Panel de mensajes */}
-      <div className={`${showChatList ? 'hidden' : 'flex'} md:flex flex-col w-full md:w-2/3 bg-white border rounded-xl shadow-sm overflow-hidden`}>
-        {selectedChat ? (
-          <>
-            <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <button onClick={() => setShowChatList(true)} className="md:hidden p-2 -ml-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                  <FaArrowLeft size={16} />
-                </button>
-                <div className="flex flex-col">
-                  <h2 className="font-bold text-gray-800">Chat con {selectedChat._id.platform_id}</h2>
-                  {selectedChat._id.platform === 'instagram' ? (
-                    <span className="text-[10px] text-pink-500 uppercase font-bold tracking-widest flex items-center gap-1">
-                      <FaInstagram /> Instagram DM
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-green-600 uppercase font-bold tracking-widest flex items-center gap-1">
-                      <FaWhatsapp /> WhatsApp Oficial
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button 
-                onClick={onClearChat}
-                className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-xs font-semibold border border-red-100"
-                title="Limpiar todo el historial de este chat"
-              >
-                <FaTrash size={12} /> Limpiar Chat
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-              {messages.map((msg: any) => (
-                <div key={msg._id} className={`flex ${msg.direction === 'inbound' ? 'justify-start' : 'justify-end'}`}>
-                  <div className={`max-w-[80%] group relative`}>
-                    <div className={`p-3 rounded-2xl shadow-sm ${msg.direction === 'inbound' ? 'bg-white text-gray-800 rounded-tl-none border' : 'bg-indigo-600 text-white rounded-tr-none'}`}>
-                      {getMessageKindLabel(msg) && (
-                        <p className={`mb-1 text-[10px] font-bold uppercase tracking-wide ${msg.status === 'failed' ? 'text-red-300' : msg.direction === 'inbound' ? 'text-pink-600' : 'text-pink-200'}`}>
-                          {getMessageKindLabel(msg)}
-                        </p>
-                      )}
-                      {msg.body}
-                    </div>
-                    <div className="flex items-center justify-between gap-4 mt-1 px-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-gray-400">
-                          {new Date(msg.timestamp).toLocaleTimeString()}
-                        </span>
-                        {msg.direction === 'inbound' && (
-                          <button 
-                            onClick={() => onConvertToFAQ(msg.body)}
-                            className="text-[10px] text-indigo-500 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity"
-                            title="Guardar como FAQ"
-                          >
-                            <FaUserEdit /> Entrenar Mila
-                          </button>
-                        )}
-                      </div>
-                      <button 
-                        onClick={() => onDeleteMessage(msg._id)}
-                        className="text-[10px] text-red-400 opacity-0 group-hover:opacity-100 hover:text-red-600 transition-all flex items-center gap-1"
-                        title="Eliminar mensaje"
-                      >
-                        <FaTrash size={10} /> Borrar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-
-            <form onSubmit={onSendMessage} className="p-4 border-t bg-white flex gap-2">
-              <input 
-                type="text" 
-                value={newMessage}
-                onChange={(e) => onNewMessageChange(e.target.value)}
-                placeholder="Escribe una respuesta manual..."
-                className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                disabled={loading}
-              />
-              <button 
-                type="submit" 
-                disabled={loading || !newMessage.trim()}
-                className="bg-indigo-600 text-white p-3 rounded-full hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
-              >
-                <FaPaperPlane />
-              </button>
-            </form>
-          </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
-            <FaRobot size={60} className="text-gray-200" />
-            <p>Selecciona un chat para supervisar a Mila AI</p>
-          </div>
-        )}
-      </div>
+      <ConfirmDialog
+        isOpen={dialog?.type === 'clear'}
+        title="Limpiar historial"
+        message="Se borran de la base de datos todos los mensajes de esta conversación. No se puede deshacer."
+        confirmLabel="Limpiar todo"
+        busy={busy}
+        onConfirm={() => run(thread.clearHistory)}
+        onClose={close}
+      />
+      <ConfirmDialog
+        isOpen={dialog?.type === 'delete'}
+        title="Eliminar mensaje"
+        message="El mensaje se borra del historial. No se puede deshacer."
+        confirmLabel="Eliminar"
+        busy={busy}
+        onConfirm={() => dialog?.type === 'delete' && run(() => thread.removeMessage(dialog.id))}
+        onClose={close}
+      />
+      <FAQModal isOpen={dialog?.type === 'faq'} onClose={close} onSubmit={saveFaq} initialQuestion={dialog?.type === 'faq' ? dialog.question : ''} loading={busy} />
     </div>
   );
 };

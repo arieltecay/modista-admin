@@ -11,7 +11,23 @@ export const clearChat = (platform: string, platformId: string) => apiClient.del
 
 // WhatsApp Templates
 export const getTemplates = () => apiClient.get('/notifications/whatsapp/templates');
-export const createTemplate = (data: any) => apiClient.post('/notifications/whatsapp/templates', data);
+/** Body Meta needs to create a template. */
+export interface TemplatePayload {
+  name: string;
+  category: string;
+  language: string;
+  components: { type: string; text: string }[];
+}
+
+/** Test send. `languageCode` was already sent; the API defaults it to es_AR. */
+export interface TestTemplatePayload {
+  to: string;
+  templateName: string;
+  components: unknown[];
+  languageCode?: string;
+}
+
+export const createTemplate = (data: TemplatePayload) => apiClient.post('/notifications/whatsapp/templates', data);
 export const deleteTemplate = (name: string) => apiClient.delete(`/notifications/whatsapp/templates/${name}`);
-export const sendTestTemplate = (data: { to: string; templateName: string; components: any[] }) => 
+export const sendTestTemplate = (data: TestTemplatePayload) =>
   apiClient.post('/notifications/whatsapp/templates/test', data);

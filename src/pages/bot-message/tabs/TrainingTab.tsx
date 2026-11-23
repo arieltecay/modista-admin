@@ -1,123 +1,133 @@
-import React, { useState, useEffect } from 'react';
-import { BotInstruction, BotInstructionFormData } from '../types';
+import { useCallback, useEffect, useState } from 'react';
+import { FaPlus } from 'react-icons/fa';
 import { botInstructionService } from '../../../services/bot-instruction/botInstructionService';
-import InstructionCard from '../components/InstructionCard';
-import InstructionModal from '../components/InstructionModal';
-import { FaPlus, FaLightbulb, FaExclamationTriangle } from 'react-icons/fa';
 import { notify } from '../../../components/shared/Toast';
+import { BotInstruction, BotInstructionFormData } from '../types';
+import InstructionModal from '../components/InstructionModal';
+import { RuleCard } from '../components/RuleCard';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { LoadState } from '../components/LoadState';
+import { HowItWorks } from '../components/HowItWorks';
+import { toInstructions } from '../utils/rules';
+import type { LoadStatus } from './types';
 
-const TrainingTab: React.FC = () => {
+const CHANNELS = [
+  { channel: 'WhatsApp', text: 'usa todas las reglas activas, las FAQ y los cursos para redactar cada respuesta.' },
+  { channel: 'Instagram', text: 'responde solo cuando el mensaje contiene una frase de una regla habilitada; si no, queda en la Bandeja para el equipo.' },
+  { channel: 'Comentarios:', text: 'Mila contesta una sola vez por mensaje privado. No publica respuestas bajo la publicación.' },
+];
+
+const toRule = (instruction: BotInstruction) => ({
+  id: instruction._id,
+  title: instruction.title,
+  content: instruction.content,
+  order: instruction.order,
+  isActive: instruction.isActive,
+  instagramDirect: instruction.instagramAutoReply ?? false,
+  instagramComments: instruction.instagramCommentReply ?? false,
+  enrollmentLookup: instruction.instagramEnrollmentLookup ?? false,
+  keywords: instruction.instagramKeywords ?? [],
+});
+
+/** "Respuestas automáticas": the bot instructions shown as rules. Same service and payloads as before. */
+const TrainingTab = () => {
   const [instructions, setInstructions] = useState<BotInstruction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [modalLoading, setModalLoading] = useState(false);
+  const [status, setStatus] = useState<LoadStatus>('loading');
+  const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<BotInstruction | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingInstruction, setEditingInstruction] = useState<BotInstruction | null>(null);
+  const [toDelete, setToDelete] = useState<BotInstruction | null>(null);
 
-  useEffect(() => {
-    loadInstructions();
+  const load = useCallback(async () => {
+    setStatus('loading');
+    try {
+      setInstructions(toInstructions(await botInstructionService.getInstructions()));
+      setStatus('ready');
+    } catch {
+      setStatus('error');
+    }
   }, []);
 
-  const loadInstructions = async () => {
-    setLoading(true);
-    try {
-      const response = await botInstructionService.getInstructions();
-      setInstructions(Array.isArray(response) ? response : []);
-    } catch (error) {
-      console.error("Error cargando instrucciones", error);
-      setInstructions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const handleCreateOrUpdate = async (data: BotInstructionFormData) => {
-    setModalLoading(true);
+  const save = async (data: BotInstructionFormData) => {
+    setBusy(true);
     try {
-      if (editingInstruction) {
-        await botInstructionService.updateInstruction(editingInstruction._id, data);
-        notify.success("Instrucción actualizada");
+      if (editing) {
+        await botInstructionService.updateInstruction(editing._id, data);
+        notify.success('Instrucción actualizada');
       } else {
         await botInstructionService.createInstruction(data);
-        notify.success("Nueva instrucción creada");
+        notify.success('Nueva instrucción creada');
       }
-      await loadInstructions();
+      await load();
       setIsModalOpen(false);
-    } catch (error) {
-      notify.error("Error al guardar la instrucción");
+    } catch {
+      notify.error('Error al guardar la instrucción');
     } finally {
-      setModalLoading(false);
+      setBusy(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("¿Estás seguro de eliminar esta sección de entrenamiento?")) return;
+  const remove = async () => {
+    if (!toDelete) return;
+    setBusy(true);
     try {
-      await botInstructionService.deleteInstruction(id);
-      await loadInstructions();
-      notify.success("Sección eliminada");
-    } catch (error) {
-      notify.error("Error al eliminar");
+      await botInstructionService.deleteInstruction(toDelete._id);
+      await load();
+      notify.success('Sección eliminada');
+      setToDelete(null);
+    } catch {
+      notify.error('Error al eliminar');
+    } finally {
+      setBusy(false);
     }
   };
 
-  const openModal = (inst?: BotInstruction) => {
-    setEditingInstruction(inst || null);
+  const open = (instruction: BotInstruction | null) => {
+    setEditing(instruction);
     setIsModalOpen(true);
   };
+  const byId = (id: string) => instructions.find(instruction => instruction._id === id) ?? null;
 
   return (
-    <div className="space-y-6">
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-amber-800">
-        <FaLightbulb className="mt-1 flex-shrink-0" />
-        <div>
-          <p className="font-bold text-sm">Consejo de Entrenamiento</p>
-          <p className="text-xs">En WhatsApp se usan todas las secciones activas. En Instagram solo responde cuando una frase activa un bloque habilitado para ese canal; los demás mensajes quedan para el equipo.</p>
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-bold text-gray-700 flex items-center gap-2">
-          Instrucciones de Mila AI ({instructions?.length || 0})
-        </h2>
-        <button 
-          onClick={() => openModal()}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-sm"
-        >
-          <FaPlus /> Nuevo Bloque
+    <div className="space-y-4">
+      <HowItWorks items={CHANNELS} />
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-lg font-bold text-slate-800">Reglas ({instructions.length})</h2>
+        <button type="button" onClick={() => open(null)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+          <FaPlus aria-hidden="true" /> Nueva regla
         </button>
       </div>
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-40 bg-gray-100 animate-pulse rounded-xl" />
+      <LoadState
+        status={status}
+        loadingLabel="Cargando reglas…"
+        errorMessage="No se pudieron cargar las respuestas automáticas."
+        isEmpty={instructions.length === 0}
+        emptyMessage={<><p className="font-medium">Todavía no hay reglas.</p><p>Mientras tanto, Mila usa su personalidad por defecto en WhatsApp y no responde en Instagram.</p></>}
+        onRetry={load}
+        skeletonClass="h-56 rounded-2xl"
+        skeletonLayoutClass="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {instructions.map(instruction => (
+            <RuleCard key={instruction._id} rule={toRule(instruction)} onEdit={id => open(byId(id))} onDelete={id => setToDelete(byId(id))} />
           ))}
         </div>
-      ) : (instructions?.length || 0) > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {instructions.map(inst => (
-            <InstructionCard 
-              key={inst._id}
-              instruction={inst}
-              onEdit={openModal}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 bg-gray-50 border-2 border-dashed rounded-2xl text-gray-400">
-          <FaExclamationTriangle size={40} className="mb-4 text-gray-300" />
-          <p>No hay instrucciones configuradas.</p>
-          <p className="text-sm">El bot usará su personalidad por defecto hasta que crees un bloque.</p>
-        </div>
-      )}
+      </LoadState>
 
-      <InstructionModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateOrUpdate}
-        instruction={editingInstruction}
-        loading={modalLoading}
+      <InstructionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={save} instruction={editing} loading={busy} />
+      <ConfirmDialog
+        isOpen={toDelete !== null}
+        title="Eliminar regla"
+        message={`Mila deja de usar "${toDelete?.title ?? ''}". No se puede deshacer.`}
+        confirmLabel="Eliminar"
+        busy={busy}
+        onConfirm={remove}
+        onClose={() => setToDelete(null)}
       />
     </div>
   );

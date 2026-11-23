@@ -1,354 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react';
-import * as chatService from '../../services/chatService';
-import { faqService } from '../../services/faq/faqService';
-import { FaRobot, FaComments, FaGraduationCap, FaTrash, FaWhatsapp, FaInstagram, FaGlobe, FaUserCheck } from 'react-icons/fa';
+import { useState } from 'react';
+import type { ReactElement } from 'react';
+import { FaComments, FaRobot, FaUserCheck, FaWhatsapp } from 'react-icons/fa';
 import ConversationsTab from './tabs/ConversationsTab';
 import TrainingTab from './tabs/TrainingTab';
 import TemplatesTab from './tabs/TemplatesTab';
 import EnrollmentTab from './tabs/EnrollmentTab';
-import GlobalModal from '../../components/shared/GlobalModal';
-import FAQModal from './components/FAQModal';
-import { FAQFormData } from '../faq/types';
-import { notify } from '../../components/shared/Toast';
-import { useNotifications } from '../../context/NotificationContext';
-import { FaCheckDouble } from 'react-icons/fa';
+import { SectionTabs } from './components/SectionTabs';
+import { SectionErrorBoundary } from './components/SectionErrorBoundary';
 
-type TabType = 'conversations' | 'training' | 'templates' | 'enrollment';
+type TabId = 'inbox' | 'rules' | 'templates' | 'enrollment';
 
-const BotMessagePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('conversations');
-  const [platformFilter, setPlatformFilter] = useState<'all' | 'whatsapp' | 'instagram'>('all');
-  const { refreshUnreadCount } = useNotifications();
-  
-  // State for Chat logic (Shared or scoped to tab)
-  const [chats, setChats] = useState<any[]>([]);
-  const [selectedChat, setSelectedChat] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<null | HTMLDivElement>(null);
+const TABS: { id: TabId; label: string; icon: ReactElement }[] = [
+  { id: 'inbox', label: 'Bandeja', icon: <FaComments /> },
+  { id: 'rules', label: 'Respuestas automáticas', icon: <FaRobot /> },
+  { id: 'templates', label: 'Plantillas de WhatsApp', icon: <FaWhatsapp /> },
+  { id: 'enrollment', label: 'Inscripciones', icon: <FaUserCheck /> },
+];
 
-  // Modal State
-  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
-  const [isDeleteMsgModalOpen, setIsDeleteMsgModalOpen] = useState(false);
-  const [isFAQModalOpen, setIsFAQModalOpen] = useState(false);
-  const [faqInitialText, setFaqInitialText] = useState('');
-  const [msgToDelete, setMsgToDelete] = useState<string | null>(null);
+const OTHER_TABS: Record<Exclude<TabId, 'inbox'>, () => ReactElement> = {
+  rules: () => <TrainingTab />,
+  templates: () => <TemplatesTab />,
+  enrollment: () => <EnrollmentTab />,
+};
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    if (activeTab === 'conversations') {
-      loadChats();
-      const interval = setInterval(loadChats, 10000);
-      return () => clearInterval(interval);
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const loadChats = async () => {
-    try {
-      const data = await chatService.getChats();
-      setChats(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Error cargando chats", err);
-    }
-  };
-
-  const handleSelectChat = async (chat: any) => {
-    setSelectedChat(chat);
-    try {
-      const data = await chatService.getMessages(chat._id.platform, chat._id.platform_id);
-      setMessages(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Error cargando mensajes", err);
-    }
-  };
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !selectedChat) return;
-
-    setLoading(true);
-    try {
-      await chatService.sendMessage(selectedChat._id.platform, selectedChat._id.platform_id, newMessage);
-      setNewMessage('');
-      const data = await chatService.getMessages(selectedChat._id.platform, selectedChat._id.platform_id);
-      setMessages(Array.isArray(data) ? data : []);
-    } catch (err) {
-      notify.error("No se pudo enviar el mensaje");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConvertToFAQ = (text: string) => {
-    setFaqInitialText(text);
-    setIsFAQModalOpen(true);
-  };
-
-  const handleSubmitFAQ = async (data: FAQFormData) => {
-    setLoading(true);
-    try {
-      await faqService.createFAQ(data);
-      notify.success("Mila ha aprendido algo nuevo.");
-      setIsFAQModalOpen(false);
-    } catch (err) {
-      notify.error("Error al crear la FAQ");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClearChat = async () => {
-    if (!selectedChat) return;
-    setLoading(true);
-    try {
-      await chatService.clearChat(selectedChat._id.platform, selectedChat._id.platform_id);
-      setMessages([]);
-      setIsClearModalOpen(false);
-      loadChats();
-      notify.success("Historial limpiado correctamente");
-    } catch (err) {
-      notify.error("Error al limpiar el historial");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMarkAllAsRead = async () => {
-    setLoading(true);
-    try {
-      const result = await chatService.markAllAsRead();
-      notify.success(`${result.modifiedCount || 'Todos los'} mensajes marcados como leídos`);
-      loadChats();
-      refreshUnreadCount();
-    } catch (err) {
-      notify.error("Error al marcar mensajes como leídos");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteMessage = async () => {
-    if (!msgToDelete || !selectedChat) return;
-    setLoading(true);
-    try {
-      await chatService.deleteMessage(msgToDelete);
-      setMessages(prev => prev.filter(m => m._id !== msgToDelete));
-      setIsDeleteMsgModalOpen(false);
-      setMsgToDelete(null);
-      notify.success("Mensaje eliminado");
-    } catch (err) {
-      notify.error("Error al eliminar el mensaje");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const confirmDeleteMessage = (id: string) => {
-    setMsgToDelete(id);
-    setIsDeleteMsgModalOpen(true);
-  };
-
-  const handlePlatformFilterChange = (filter: 'all' | 'whatsapp' | 'instagram') => {
-    setPlatformFilter(filter);
-    setSelectedChat(null);
-    setMessages([]);
-  };
+/** "Mensajes": inbox and automatic replies of WhatsApp and Instagram. Same routes and API as before. */
+const BotMessagePage = () => {
+  const [activeTab, setActiveTab] = useState<TabId>('inbox');
 
   return (
-    <div className="h-[calc(100vh+50px)] flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <FaRobot className="text-indigo-600" /> Mila AI
-          </h1>
-          <p className="text-sm text-gray-500">Supervisión y Entrenamiento del Asistente Virtual</p>
-        </div>
-      </div>
+    <div className="flex flex-col gap-4 md:h-[calc(100vh-8rem)]">
+      <header>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Mensajes</h1>
+        <p className="mt-1 text-sm text-slate-500">Conversaciones y respuestas automáticas de Mila en WhatsApp e Instagram.</p>
+      </header>
 
-      {/* Tabs Selector */}
-      <div className="flex gap-2 mb-6 bg-white p-1 rounded-2xl shadow-sm border overflow-x-auto md:overflow-visible md:w-fit">
-        <button 
-          onClick={() => setActiveTab('conversations')}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition-all ${activeTab === 'conversations' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-        >
-          <FaComments /> Conversaciones
-        </button>
-        <button 
-          onClick={() => setActiveTab('training')}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition-all ${activeTab === 'training' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-        >
-          <FaGraduationCap /> Entrenamiento
-        </button>
-        <button 
-          onClick={() => setActiveTab('templates')}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition-all ${activeTab === 'templates' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-        >
-          <FaWhatsapp /> Plantillas
-        </button>
-        <button 
-          onClick={() => setActiveTab('enrollment')}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition-all ${activeTab === 'enrollment' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-        >
-          <FaUserCheck /> Inscripciones
-        </button>
-      </div>
+      <SectionTabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
 
-      {/* Filtro de Plataforma */}
-      {activeTab === 'conversations' && (
-        <div className="flex flex-wrap items-center gap-3 mb-4">
-          <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border w-fit">
-            <button
-              onClick={() => handlePlatformFilterChange('all')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                platformFilter === 'all'
-                  ? 'bg-slate-800 text-white shadow-md'
-                  : 'bg-white text-slate-500 hover:bg-slate-50'
-              }`}
-            >
-              <FaGlobe /> Todas
-            </button>
-            <button
-              onClick={() => handlePlatformFilterChange('whatsapp')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                platformFilter === 'whatsapp'
-                  ? 'bg-green-600 text-white shadow-md'
-                  : 'bg-white text-slate-500 hover:bg-slate-50'
-              }`}
-            >
-              <FaWhatsapp /> WhatsApp
-            </button>
-            <button
-              onClick={() => handlePlatformFilterChange('instagram')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                platformFilter === 'instagram'
-                  ? 'bg-pink-600 text-white shadow-md'
-                  : 'bg-white text-slate-500 hover:bg-slate-50'
-              }`}
-            >
-              <FaInstagram /> Instagram
-            </button>
-          </div>
-          <button
-            onClick={handleMarkAllAsRead}
-            disabled={loading}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-all shadow-sm disabled:opacity-50 w-full sm:w-auto"
-            title="Marcar todos los mensajes como leídos"
-          >
-            <FaCheckDouble size={14} /> Marcar todo leído
-          </button>
+      {/* The inbox stays mounted (hidden) so the open conversation and the draft survive tab changes. */}
+      <div id="panel-inbox" role="tabpanel" aria-labelledby="tab-inbox" hidden={activeTab !== 'inbox'} className="min-h-0 flex-1">
+        <SectionErrorBoundary resetKey={activeTab}>
+          <ConversationsTab active={activeTab === 'inbox'} />
+        </SectionErrorBoundary>
+      </div>
+      {activeTab !== 'inbox' && (
+        <div id={`panel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`} className="min-h-0 flex-1 overflow-y-auto">
+          <SectionErrorBoundary key={activeTab}>{OTHER_TABS[activeTab]()}</SectionErrorBoundary>
         </div>
       )}
-      
-      {/* Content Area */}
-      <div className="flex-1 min-h-0">
-        <div className="h-full">
-          {activeTab === 'conversations' ? (
-            <ConversationsTab 
-              chats={
-                platformFilter === 'all' 
-                  ? chats 
-                  : chats.filter(c => c._id.platform === platformFilter)
-              }
-              selectedChat={selectedChat}
-              messages={messages}
-              newMessage={newMessage}
-              loading={loading}
-              onSelectChat={handleSelectChat}
-              onSendMessage={handleSendMessage}
-              onNewMessageChange={setNewMessage}
-              onConvertToFAQ={handleConvertToFAQ}
-              onDeleteMessage={confirmDeleteMessage}
-              onClearChat={() => setIsClearModalOpen(true)}
-              messagesEndRef={messagesEndRef}
-            />
-          ) : activeTab === 'training' ? (
-            <div className="h-full overflow-y-auto custom-scrollbar">
-              <TrainingTab />
-            </div>
-          ) : activeTab === 'templates' ? (
-            <div className="h-full overflow-y-auto custom-scrollbar">
-              <TemplatesTab />
-            </div>
-          ) : (
-            <div className="h-full overflow-y-auto custom-scrollbar">
-              <EnrollmentTab />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Modales de Confirmación */}
-      <GlobalModal
-        isOpen={isClearModalOpen}
-        onClose={() => setIsClearModalOpen(false)}
-        title="Limpiar Historial de Chat"
-        footer={
-          <>
-            <button
-              onClick={() => setIsClearModalOpen(false)}
-              className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleClearChat}
-              disabled={loading}
-              className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:opacity-50"
-            >
-              {loading ? 'Limpiando...' : 'Limpiar Todo'}
-            </button>
-          </>
-        }
-      >
-        <p className="text-sm text-gray-500">
-          ¿Estás seguro de que quieres eliminar todo el historial de este chat? Esta acción borrará físicamente todos los mensajes de la base de datos y no se puede deshacer.
-        </p>
-      </GlobalModal>
-
-      <GlobalModal
-        isOpen={isDeleteMsgModalOpen}
-        onClose={() => setIsDeleteMsgModalOpen(false)}
-        title="Eliminar Mensaje"
-        footer={
-          <>
-            <button
-              onClick={() => setIsDeleteMsgModalOpen(false)}
-              className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleDeleteMessage}
-              disabled={loading}
-              className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto disabled:opacity-50"
-            >
-              {loading ? 'Eliminando...' : 'Eliminar'}
-            </button>
-          </>
-        }
-      >
-        <p className="text-sm text-gray-500">
-          ¿Estás seguro de que quieres eliminar este mensaje? Esta acción es permanente.
-        </p>
-      </GlobalModal>
-
-      {/* FAQ Modal */}
-      <FAQModal 
-        isOpen={isFAQModalOpen}
-        onClose={() => setIsFAQModalOpen(false)}
-        onSubmit={handleSubmitFAQ}
-        initialQuestion={faqInitialText}
-        loading={loading}
-      />
     </div>
   );
 };

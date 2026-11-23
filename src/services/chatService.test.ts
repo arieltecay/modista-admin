@@ -19,7 +19,12 @@ describe('chatService contract', () => {
     ['deleteMessage', () => chat.deleteMessage('m1'), 'delete', ['/chat/messages/m1']],
     ['clearChat', () => chat.clearChat('whatsapp', '549'), 'delete', ['/chat/whatsapp/549/clear']],
     ['getTemplates', () => chat.getTemplates(), 'get', ['/notifications/whatsapp/templates']],
-    ['createTemplate', () => chat.createTemplate({ name: 'a' }), 'post', ['/notifications/whatsapp/templates', { name: 'a' }]],
+    [
+      'createTemplate',
+      () => chat.createTemplate({ name: 'a', category: 'UTILITY', language: 'es_AR', components: [{ type: 'BODY', text: 'Hola' }] }),
+      'post',
+      ['/notifications/whatsapp/templates', { name: 'a', category: 'UTILITY', language: 'es_AR', components: [{ type: 'BODY', text: 'Hola' }] }],
+    ],
     ['deleteTemplate', () => chat.deleteTemplate('aviso'), 'delete', ['/notifications/whatsapp/templates/aviso']],
     [
       'sendTestTemplate',

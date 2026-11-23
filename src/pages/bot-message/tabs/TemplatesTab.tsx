@@ -1,269 +1,133 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { FaPlus, FaSync } from 'react-icons/fa';
 import * as chatService from '../../../services/chatService';
-import { FaPlus, FaSync, FaTrash, FaCheckCircle, FaClock, FaTimesCircle, FaWhatsapp, FaPaperPlane } from 'react-icons/fa';
-import GlobalModal from '../../../components/shared/GlobalModal';
 import { notify } from '../../../components/shared/Toast';
+import { TemplateCard } from '../components/TemplateCard';
+import { TemplateTestDialog } from '../components/TemplateTestDialog';
+import { TemplateCreateDialog } from '../components/TemplateCreateDialog';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { LoadState } from '../components/LoadState';
+import { testComponentsFor, toTemplates, type TemplateRow } from '../utils/templates';
+import type { LoadStatus } from './types';
 
-const TemplatesTab: React.FC = () => {
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newTemplate, setNewTemplate] = useState({
-    name: '',
-    category: 'UTILITY',
-    language: 'es_AR',
-    body: ''
-  });
+const errorText = (error: unknown) => (error instanceof Error && error.message ? error.message : 'Error al crear la plantilla');
 
-  useEffect(() => {
-    loadTemplates();
+/** "Plantillas de WhatsApp": templates as Meta has them. Same services and payloads as before. */
+const TemplatesTab = () => {
+  const [templates, setTemplates] = useState<TemplateRow[]>([]);
+  const [status, setStatus] = useState<LoadStatus>('loading');
+  const [creating, setCreating] = useState(false);
+  const [testing, setTesting] = useState<TemplateRow | null>(null);
+  const [toDelete, setToDelete] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setStatus('loading');
+    try {
+      const data: unknown = await chatService.getTemplates();
+      setTemplates(toTemplates(data));
+      setStatus('ready');
+    } catch {
+      setStatus('error');
+    }
   }, []);
 
-  const loadTemplates = async () => {
-    setLoading(true);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const create = async (draft: { name: string; category: string; language: string; body: string }) => {
     try {
-      const data = await chatService.getTemplates();
-      setTemplates(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Error cargando plantillas", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (name: string) => {
-    if (!window.confirm(`¿Estás seguro de eliminar la plantilla "${name}" de Meta?`)) return;
-    try {
-      await chatService.deleteTemplate(name);
-      notify.success("Plantilla eliminada");
-      loadTemplates();
-    } catch (err) {
-      notify.error("Error al eliminar la plantilla");
-    }
-  };
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Estructura requerida por Meta API para creación
-    const templateData = {
-      name: newTemplate.name.toLowerCase().replace(/\s+/g, '_'),
-      category: newTemplate.category,
-      language: newTemplate.language,
-      components: [
-        {
-          type: 'BODY',
-          text: newTemplate.body
-        }
-      ]
-    };
-
-    try {
-      await chatService.createTemplate(templateData);
-      setIsModalOpen(false);
-      setNewTemplate({ name: '', category: 'UTILITY', language: 'es_AR', body: '' });
-      loadTemplates();
-      notify.success("Plantilla enviada a revisión en Meta.");
-    } catch (err: any) {
-      notify.error(err.message || "Error al crear la plantilla");
-    }
-  };
-
-  const handleSendTest = async (tpl: any) => {
-    const to = window.prompt("Ingresa el número de teléfono para la prueba (con código de país, ej: 549...)");
-    if (!to) return;
-
-    // Lógica para rellenar variables si es la plantilla de confirmación de pago
-    let components: any[] = [];
-    if (tpl.name === 'confirmacion_pago_utilidad') {
-      components = [
-        {
-          type: 'body',
-          parameters: [
-            { type: 'text', parameter_name: 'nombre_alumno', text: 'Alumno de Prueba' },
-            { type: 'text', parameter_name: 'nombre_curso', text: 'Curso de Prueba' },
-            { type: 'text', parameter_name: 'cvu', text: '0000003100069944243193' },
-            { type: 'text', parameter_name: 'alias', text: 'mica.menta' }
-          ]
-        }
-      ];
-    }
-
-    try {
-      await chatService.sendTestTemplate({
-        to,
-        templateName: tpl.name,
-        languageCode: tpl.language,
-        components
+      await chatService.createTemplate({
+        name: draft.name.toLowerCase().replace(/\s+/g, '_'),
+        category: draft.category,
+        language: draft.language,
+        components: [{ type: 'BODY', text: draft.body }],
       });
-      notify.success("¡Prueba enviada con éxito!");
-    } catch (err: any) {
-      notify.error("Error al enviar la prueba");
+      setCreating(false);
+      load();
+      notify.success('Plantilla enviada a revisión en Meta.');
+      return true;
+    } catch (error) {
+      notify.error(errorText(error));
+      return false;
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'APPROVED': return <FaCheckCircle className="text-green-500" />;
-      case 'PENDING': return <FaClock className="text-amber-500" />;
-      case 'REJECTED': return <FaTimesCircle className="text-red-500" />;
-      default: return null;
+  const sendTest = async (to: string) => {
+    if (!testing) return;
+    setBusy(true);
+    try {
+      await chatService.sendTestTemplate({ to, templateName: testing.name, languageCode: testing.language, components: testComponentsFor(testing.name) });
+      notify.success('¡Prueba enviada con éxito!');
+      setTesting(null);
+    } catch {
+      notify.error('Error al enviar la prueba');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!toDelete) return;
+    setBusy(true);
+    try {
+      await chatService.deleteTemplate(toDelete);
+      notify.success('Plantilla eliminada');
+      setToDelete(null);
+      load();
+    } catch {
+      notify.error('Error al eliminar la plantilla');
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header acciones */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-bold text-gray-700 flex items-center gap-2">
-          Plantillas Oficiales de WhatsApp ({templates.length})
-        </h2>
+    <div className="space-y-4">
+      <p className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900">
+        Las plantillas son los únicos mensajes que WhatsApp permite enviar fuera de las 24 horas desde el último mensaje de la persona. Meta las revisa antes de aprobarlas.
+      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-bold text-slate-800">Plantillas ({templates.length})</h2>
         <div className="flex gap-2">
-          <button 
-            onClick={loadTemplates}
-            className="p-2.5 bg-white border rounded-xl text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
-            title="Sincronizar con Meta"
-          >
-            <FaSync className={loading ? 'animate-spin' : ''} />
+          <button type="button" onClick={load} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <FaSync aria-hidden="true" className={status === 'loading' ? 'animate-spin' : ''} /> Actualizar desde Meta
           </button>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-sm font-semibold"
-          >
-            <FaPlus /> Crear Plantilla
+          <button type="button" onClick={() => setCreating(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+            <FaPlus aria-hidden="true" /> Crear plantilla
           </button>
         </div>
       </div>
 
-      {/* Grid de Plantillas */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-48 bg-gray-100 animate-pulse rounded-2xl border" />
-          ))}
-        </div>
-      ) : templates.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {templates.map((tpl: any) => (
-            <div key={tpl.id} className="bg-white border rounded-2xl shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
-              <div className="p-4 border-b bg-gray-50 flex justify-between items-start">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-1">{tpl.category}</span>
-                  <h3 className="font-bold text-gray-800 break-all">{tpl.name}</h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  {tpl.status === 'APPROVED' && (
-                    <button 
-                      onClick={() => handleSendTest(tpl)}
-                      className="text-indigo-400 hover:text-indigo-600 transition-colors"
-                      title="Enviar prueba"
-                    >
-                      <FaPaperPlane size={14} />
-                    </button>
-                  )}
-                  <span title={tpl.status}>{getStatusIcon(tpl.status)}</span>
-                  <button 
-                    onClick={() => handleDelete(tpl.name)}
-                    className="text-red-400 hover:text-red-600 transition-colors"
-                  >
-                    <FaTrash size={14} />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="p-4 flex-1 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat">
-                <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm text-sm text-gray-700 relative border border-gray-100">
-                  {tpl.components.find((c: any) => c.type === 'BODY')?.text || 'Sin contenido'}
-                  <div className="text-[9px] text-gray-400 text-right mt-1">
-                    {tpl.language}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 bg-gray-50 border-2 border-dashed rounded-2xl text-gray-400">
-          <FaWhatsapp size={40} className="mb-4 text-gray-300" />
-          <p>No se encontraron plantillas en tu cuenta de Meta.</p>
-          <p className="text-sm">Crea tu primera plantilla para automatizar notificaciones.</p>
-        </div>
-      )}
-
-      {/* Modal Creación */}
-      <GlobalModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Crear Nueva Plantilla en Meta"
+      <LoadState
+        status={status}
+        loadingLabel="Cargando plantillas…"
+        errorMessage="No se pudieron cargar las plantillas de Meta."
+        isEmpty={templates.length === 0}
+        emptyMessage="No hay plantillas en tu cuenta de Meta."
+        onRetry={load}
+        skeletonClass="h-48 rounded-2xl"
+        skeletonLayoutClass="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
       >
-        <form onSubmit={handleCreate} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre (minúsculas y guiones bajos)</label>
-            <input 
-              type="text" 
-              required
-              value={newTemplate.name}
-              onChange={e => setNewTemplate({...newTemplate, name: e.target.value})}
-              placeholder="ej: confirmacion_pago"
-              className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
-          </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {templates.map(template => (
+            <TemplateCard key={template.id} template={template} onSendTest={id => setTesting(templates.find(t => t.id === id) ?? null)} onDelete={setToDelete} />
+          ))}
+        </div>
+      </LoadState>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-              <select 
-                value={newTemplate.category}
-                onChange={e => setNewTemplate({...newTemplate, category: e.target.value})}
-                className="w-full border rounded-xl px-4 py-2 outline-none"
-              >
-                <option value="UTILITY">Utilidad (Pagos, Avisos)</option>
-                <option value="MARKETING">Marketing (Promociones)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Idioma</label>
-              <select 
-                value={newTemplate.language}
-                onChange={e => setNewTemplate({...newTemplate, language: e.target.value})}
-                className="w-full border rounded-xl px-4 py-2 outline-none"
-              >
-                <option value="es_AR">Español (Argentina)</option>
-                <option value="es">Español (General)</option>
-                <option value="en_US">Inglés (US)</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contenido del Mensaje</label>
-            <textarea 
-              required
-              rows={4}
-              value={newTemplate.body}
-              onChange={e => setNewTemplate({...newTemplate, body: e.target.value})}
-              placeholder="Hola {{1}}, tu curso {{2}} ya está listo..."
-              className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-            />
-            <p className="text-[10px] text-gray-400 mt-1">Usa {"{{1}}"}, {"{{2}}"}, etc. para insertar variables dinámicas desde el sistema.</p>
-          </div>
-
-          <div className="pt-4 flex gap-3">
-            <button 
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-4 py-2 border rounded-xl text-gray-600 hover:bg-gray-50 transition-colors font-semibold"
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit"
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold"
-            >
-              Enviar a Meta
-            </button>
-          </div>
-        </form>
-      </GlobalModal>
+      <TemplateCreateDialog isOpen={creating} onSubmit={create} onClose={() => setCreating(false)} />
+      <TemplateTestDialog templateName={testing?.name ?? null} sending={busy} onSend={sendTest} onClose={() => setTesting(null)} />
+      <ConfirmDialog
+        isOpen={toDelete !== null}
+        title="Eliminar plantilla"
+        message={`Se elimina "${toDelete ?? ''}" de tu cuenta de Meta, en todos sus idiomas. No se puede deshacer.`}
+        confirmLabel="Eliminar"
+        busy={busy}
+        onConfirm={remove}
+        onClose={() => setToDelete(null)}
+      />
     </div>
   );
 };

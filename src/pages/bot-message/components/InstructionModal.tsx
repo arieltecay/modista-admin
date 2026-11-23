@@ -3,6 +3,12 @@ import { BotInstruction, BotInstructionFormData } from '../types';
 import { FaSave } from 'react-icons/fa';
 import GlobalModal from '../../../components/shared/GlobalModal';
 
+/** An emptied number field gives NaN; the API only accepts integers from 0. */
+const toOrder = (value: string) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? 0 : Math.max(0, parsed);
+};
+
 interface InstructionModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -71,7 +77,7 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
     <GlobalModal
       isOpen={isOpen}
       onClose={onClose}
-      title={instruction ? 'Editar Bloque de Instrucción' : 'Nuevo Bloque de Instrucción'}
+      title={instruction ? 'Editar regla' : 'Nueva regla'}
       size="2xl"
       footer={
         <>
@@ -86,7 +92,7 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
             disabled={loading || !formData.title.trim() || !formData.content.trim() || (needsKeywords && !hasKeywords)}
             className="inline-flex w-full justify-center rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto disabled:opacity-50 flex items-center gap-2"
           >
-            <FaSave /> {loading ? 'Guardando...' : 'Guardar Instrucción'}
+            <FaSave aria-hidden="true" /> {loading ? 'Guardando...' : 'Guardar regla'}
           </button>
         </>
       }
@@ -94,8 +100,9 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Título de la Sección</label>
-            <input 
+            <label htmlFor="rule-title" className="text-sm font-semibold text-gray-700">Nombre de la regla</label>
+            <input
+              id="rule-title"
               type="text"
               required
               value={formData.title}
@@ -105,20 +112,24 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Orden de Ensamblado</label>
-            <input 
+            <label htmlFor="rule-order" className="text-sm font-semibold text-gray-700">Orden</label>
+            <input
+              id="rule-order"
               type="number"
+              min={0}
               required
               value={formData.order}
-              onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) })}
+              onChange={e => setFormData({ ...formData, order: toOrder(e.target.value) })}
               className="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none border-gray-200"
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-gray-700">Contenido de la Instrucción</label>
-          <textarea 
+          <label htmlFor="rule-content" className="text-sm font-semibold text-gray-700">Lo que sabe Mila</label>
+          <p className="text-xs text-gray-500">Mila redacta la respuesta usando este texto como contexto: no lo envía palabra por palabra.</p>
+          <textarea
+            id="rule-content"
             required
             rows={8}
             value={formData.content}
@@ -156,7 +167,7 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
             <input type="checkbox" checked={formData.instagramCommentReply} onChange={e => setFormData({ ...formData, instagramCommentReply: e.target.checked })} />
             Responder comentarios públicos por mensaje privado
           </label>
-          {formData.instagramCommentReply && <p className="text-xs text-gray-600">Si el comentario contiene una frase, Mila envía un único mensaje privado (hasta 7 días después del comentario). Los comentarios sin coincidencia quedan en Conversaciones. Nunca incluye datos de inscripciones.</p>}
+          {formData.instagramCommentReply && <p className="text-xs text-gray-600">Si el comentario contiene una frase, Mila envía un único mensaje privado (hasta 7 días después del comentario). Los comentarios sin coincidencia quedan en la Bandeja. Nunca incluye datos de inscripciones.</p>}
           {needsKeywords && (
             <>
               <label className="block text-sm font-medium text-gray-800" htmlFor="instagramKeywords">Frases que activan este bloque</label>

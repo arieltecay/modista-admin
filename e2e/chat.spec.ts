@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { mockApi, type MockApi } from './support/mockApi';
 import { INSTAGRAM_ID, WHATSAPP_ID } from '../src/test/fixtures/botMessage';
 
@@ -7,11 +8,15 @@ import { INSTAGRAM_ID, WHATSAPP_ID } from '../src/test/fixtures/botMessage';
 
 let api: MockApi;
 const calls = () => api.calls.map(({ call }) => call);
+const whatsappChat = (page: Page) => page.getByRole('button', { name: new RegExp(`\\+${WHATSAPP_ID}`) });
+const composer = (page: Page) => page.getByLabel('Respuesta manual');
+const horizontalOverflow = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
 
 test.beforeEach(async ({ page }) => {
   api = await mockApi(page);
   await page.goto('/admin/chat');
-  await expect(page.getByText(`+${WHATSAPP_ID}`)).toBeVisible();
+  // The first tests after starting Vite wait for it to compile the page on demand.
+  await expect(whatsappChat(page)).toBeVisible({ timeout: 30_000 });
 });
 
 test.afterEach(() => {
@@ -26,62 +31,76 @@ test('opens the inbox with only the conversation list and the unread badge', asy
 test('filters by channel without asking the server again', async ({ page }) => {
   const before = calls().length;
 
-  await page.getByRole('button', { name: /instagram/i }).click();
-  await expect(page.getByText(`+${WHATSAPP_ID}`)).toBeHidden();
-  await expect(page.getByText(INSTAGRAM_ID)).toBeVisible();
+  await page.getByRole('button', { name: 'Instagram', exact: true }).click();
+  await expect(whatsappChat(page)).toBeHidden();
+  await expect(page.getByRole('button', { name: new RegExp(INSTAGRAM_ID) })).toBeVisible();
 
   expect(calls().length).toBe(before);
 });
 
 test('opens a conversation, labels comments and goes back on mobile', async ({ page, isMobile }) => {
-  await page.getByText(`+${WHATSAPP_ID}`).click();
+  await whatsappChat(page).click();
 
   await expect(page.getByText('Comentario público')).toBeVisible();
   await expect(page.getByText('Respuesta privada al comentario · no enviada')).toBeVisible();
   expect(calls()).toContain(`GET /api/chat/whatsapp/${WHATSAPP_ID}`);
+  expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
 
   if (isMobile) {
-    await expect(page.getByText(`+${WHATSAPP_ID}`)).toBeHidden();
-    // TEMP: the back button has no accessible name; the redesign PR replaces this with getByRole.
-    await page.locator('button.md\\:hidden').click();
-    await expect(page.getByText(`+${WHATSAPP_ID}`)).toBeVisible();
+    await expect(whatsappChat(page)).toBeHidden();
+    await page.getByRole('button', { name: 'Volver a conversaciones' }).click();
+    await expect(whatsappChat(page)).toBeVisible();
   }
 });
 
 test('sends a manual reply with the same request as today', async ({ page }) => {
-  await page.getByText(`+${WHATSAPP_ID}`).click();
-  const composer = page.getByPlaceholder('Escribe una respuesta manual...');
+  await whatsappChat(page).click();
 
-  await composer.fill('Te paso el link');
-  await composer.press('Enter');
+  await composer(page).fill('Te paso el link');
+  await composer(page).press('Enter');
 
-  await expect(composer).toHaveValue('');
+  await expect(composer(page)).toHaveValue('');
   const sends = api.calls.filter(({ call }) => call.startsWith('POST'));
   expect(sends).toEqual([{ call: `POST /api/chat/whatsapp/${WHATSAPP_ID}/messages`, body: { body: 'Te paso el link' } }]);
 });
 
 test('keeps the draft when the send fails', async ({ page }) => {
   api.failNextSend();
-  await page.getByText(`+${WHATSAPP_ID}`).click();
-  const composer = page.getByPlaceholder('Escribe una respuesta manual...');
+  await whatsappChat(page).click();
 
-  await composer.fill('Te paso el link');
-  await composer.press('Enter');
+  await composer(page).fill('Te paso el link');
+  await composer(page).press('Enter');
 
   await expect(page.getByText('No se pudo enviar el mensaje')).toBeVisible();
-  await expect(composer).toHaveValue('Te paso el link');
+  await expect(composer(page)).toHaveValue('Te paso el link');
+});
+
+test('deletes a message through the real confirmation dialog', async ({ page }) => {
+  await whatsappChat(page).click();
+  await page.getByRole('button', { name: 'Borrar mensaje' }).first().click();
+
+  // Headless UI's dialog root has no size (its children are fixed): check what the person sees inside it.
+  const confirm = page.getByRole('dialog', { name: 'Eliminar mensaje' }).getByRole('button', { name: 'Eliminar' });
+  await expect(confirm).toBeVisible();
+  await confirm.click();
+
+  await expect(confirm).toBeHidden();
+  expect(calls()).toContain('DELETE /api/chat/messages/m1');
 });
 
 test('every tab renders its content', async ({ page }) => {
-  await page.getByRole('button', { name: /entrenamiento/i }).click();
-  await expect(page.getByText('Curso camisa')).toBeVisible();
-  await page.getByRole('button', { name: /plantillas/i }).click();
-  await expect(page.getByText('aviso_aprobado', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: /inscripciones/i }).click();
+  await page.getByRole('tab', { name: 'Respuestas automáticas' }).click();
+  await expect(page.getByRole('article', { name: 'Curso camisa' })).toBeVisible();
+  expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+  await page.getByRole('tab', { name: 'Plantillas de WhatsApp' }).click();
+  await expect(page.getByRole('article', { name: 'aviso_aprobado' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Inscripciones' }).click();
   await expect(page.getByLabel('Responder consultas de inscripción por WhatsApp')).toBeVisible();
 });
 
-test('fits the screen without horizontal scroll', async ({ page }) => {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
+test('shows every tab on screen without horizontal scroll', async ({ page }) => {
+  for (const name of ['Bandeja', 'Respuestas automáticas', 'Plantillas de WhatsApp', 'Inscripciones']) {
+    await expect(page.getByRole('tab', { name })).toBeInViewport();
+  }
+  expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
 });

@@ -20,12 +20,7 @@ export interface MockApi {
 }
 
 /** Static assets the admin loads from the internet. Aborted too, but not a failure. */
-const STATIC_ASSET_ORIGINS = new Set([
-  'https://fonts.googleapis.com',
-  'https://fonts.gstatic.com',
-  // Background of the template preview (TemplatesTab). The redesign PR drops this external image.
-  'https://user-images.githubusercontent.com',
-]);
+const STATIC_ASSET_ORIGINS = new Set(['https://fonts.googleapis.com', 'https://fonts.gstatic.com']);
 
 const MESSAGES_PATH = /^\/api\/chat\/(whatsapp|instagram)\/[^/]+$/;
 const SEND_PATH = /^\/api\/chat\/(whatsapp|instagram)\/[^/]+\/messages$/;
@@ -40,6 +35,7 @@ const answer = (method: string, path: string): unknown => {
   if (method === 'GET' && MESSAGES_PATH.test(path)) return messages;
   if (method === 'POST' && SEND_PATH.test(path)) return { _id: 'sent', direction: 'outbound', status: 'sent' };
   if (method === 'POST' && path === '/api/chat/read-all') return { message: 'ok', modifiedCount: 2 };
+  if (method === 'DELETE' && /^\/api\/chat\/messages\/[^/]+$/.test(path)) return { message: 'Mensaje eliminado' };
   return undefined;
 };
 

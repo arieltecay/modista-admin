@@ -98,6 +98,9 @@ describe('TrainingTab (Respuestas automáticas)', () => {
         instagramCommentReply: false,
         instagramResponseMode: 'gemini',
         instagramFixedResponse: '',
+        whatsappFixedReplyEnabled: false,
+        whatsappKeywords: [],
+        whatsappFixedResponse: '',
       }),
     );
     expect(service.getInstructions).toHaveBeenCalledTimes(2);
@@ -111,7 +114,7 @@ describe('TrainingTab (Respuestas automáticas)', () => {
     await user.click(save());
 
     const { _id, ...fields } = instruction;
-    await waitFor(() => expect(service.updateInstruction).toHaveBeenCalledWith(_id, { ...fields, instagramResponseMode: 'gemini', instagramFixedResponse: '' }));
+    await waitFor(() => expect(service.updateInstruction).toHaveBeenCalledWith(_id, { ...fields, instagramResponseMode: 'gemini', instagramFixedResponse: '', whatsappFixedReplyEnabled: false, whatsappKeywords: [], whatsappFixedResponse: '' }));
     expect(notify.success).toHaveBeenCalledWith('Instrucción actualizada');
   });
 

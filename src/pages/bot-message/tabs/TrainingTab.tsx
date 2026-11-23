@@ -12,7 +12,7 @@ import { toInstructions } from '../utils/rules';
 import type { LoadStatus } from './types';
 
 const CHANNELS = [
-  { channel: 'WhatsApp', text: 'usa todas las reglas activas, las FAQ y los cursos para redactar cada respuesta.' },
+  { channel: 'WhatsApp', text: 'usa todas las reglas activas, las FAQ y los cursos para redactar cada respuesta. Si coincide una respuesta fija, la envía antes de Mila.' },
   { channel: 'Instagram', text: 'responde solo cuando el mensaje contiene una frase de una regla habilitada; si no, queda en la Bandeja para el equipo. Si la regla tiene respuesta fija, la envía tal cual, sin Gemini.' },
   { channel: 'Comentarios:', text: 'Mila contesta una sola vez por mensaje privado. No publica respuestas bajo la publicación.' },
 ];
@@ -29,6 +29,9 @@ const toRule = (instruction: BotInstruction) => ({
   keywords: instruction.instagramKeywords ?? [],
   replyMode: instruction.instagramResponseMode === 'fixed' ? 'fixed' as const : 'gemini' as const,
   fixedResponse: instruction.instagramFixedResponse ?? '',
+  whatsappFixedReplyEnabled: instruction.whatsappFixedReplyEnabled ?? false,
+  whatsappKeywords: instruction.whatsappKeywords ?? [],
+  whatsappFixedResponse: instruction.whatsappFixedResponse ?? '',
 });
 
 /** "Respuestas automáticas": the bot instructions shown as rules. Same service and payloads as before. */

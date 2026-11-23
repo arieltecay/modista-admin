@@ -22,6 +22,9 @@ const EMPTY_FORM: BotInstructionFormData = {
   instagramCommentReply: false,
   instagramResponseMode: 'gemini',
   instagramFixedResponse: '',
+  whatsappFixedReplyEnabled: false,
+  whatsappKeywords: [],
+  whatsappFixedResponse: '',
 };
 
 const toForm = (instruction: BotInstruction): BotInstructionFormData => ({
@@ -35,6 +38,9 @@ const toForm = (instruction: BotInstruction): BotInstructionFormData => ({
   instagramCommentReply: instruction.instagramCommentReply ?? false,
   instagramResponseMode: instruction.instagramResponseMode === 'fixed' ? 'fixed' : 'gemini',
   instagramFixedResponse: instruction.instagramFixedResponse ?? '',
+  whatsappFixedReplyEnabled: instruction.whatsappFixedReplyEnabled ?? false,
+  whatsappKeywords: instruction.whatsappKeywords ?? [],
+  whatsappFixedResponse: instruction.whatsappFixedResponse ?? '',
 });
 
 interface InstructionModalProps {
@@ -54,10 +60,12 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<BotInstructionFormData>(EMPTY_FORM);
   const [keywordText, setKeywordText] = useState('');
+  const [whatsappKeywordText, setWhatsappKeywordText] = useState('');
 
   useEffect(() => {
     setFormData(instruction ? toForm(instruction) : EMPTY_FORM);
     setKeywordText((instruction?.instagramKeywords ?? []).join(', '));
+    setWhatsappKeywordText((instruction?.whatsappKeywords ?? []).join(', '));
   }, [instruction, isOpen]);
 
   const hasKeywords = keywordText.split(/[,\n]/).some(value => value.trim().length >= 3);
@@ -68,11 +76,16 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
   const fixedReplyBlocked = isFixed ? fixedIssue !== undefined : fixedIssue === 'tooLong';
   // Stay visible while it can block saving, even with Instagram turned off, so the reason is never hidden.
   const showResponseMode = needsKeywords || fixedReplyBlocked;
+  const whatsappPhrases = whatsappKeywordText.split(/[,\n]/).map(value => value.trim()).filter(Boolean);
+  const whatsappKeywords = [...new Set(whatsappPhrases)];
+  const whatsappPhrasesInvalid = whatsappKeywords.length > 20 || whatsappKeywords.some(value => value.length < 3 || value.length > 80);
+  const whatsappIssue = fixedReplyIssue(formData.whatsappFixedResponse);
+  const whatsappReplyBlocked = (formData.whatsappFixedReplyEnabled && (!whatsappKeywords.length || whatsappPhrasesInvalid || whatsappIssue !== undefined)) || whatsappIssue === 'tooLong' || whatsappPhrasesInvalid;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const instagramKeywords = [...new Set(keywordText.split(/[,\n]/).map(value => value.trim()).filter(value => value.length >= 3))];
-    onSubmit({ ...formData, instagramKeywords });
+    onSubmit({ ...formData, instagramKeywords, whatsappKeywords });
   };
 
   return (
@@ -91,7 +104,7 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={loading || !formData.title.trim() || !formData.content.trim() || (needsKeywords && !hasKeywords) || fixedReplyBlocked}
+            disabled={loading || !formData.title.trim() || !formData.content.trim() || (needsKeywords && !hasKeywords) || fixedReplyBlocked || whatsappReplyBlocked}
             className="inline-flex w-full justify-center rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto disabled:opacity-50 flex items-center gap-2"
           >
             <FaSave aria-hidden="true" /> {loading ? 'Guardando...' : 'Guardar regla'}
@@ -155,6 +168,24 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
           <label htmlFor="isActive" className="text-sm font-medium text-indigo-900 cursor-pointer">
             ¿Esta sección está activa para Mila AI?
           </label>
+        </div>
+        <div className="space-y-3 rounded-xl border border-green-200 bg-green-50 p-4">
+          <div>
+            <p className="text-sm font-bold text-green-900">Respuesta fija en WhatsApp</p>
+            <p className="text-xs text-green-800">Si el mensaje contiene una de estas frases, se envía este texto tal cual antes de Mila. No consulta inscripciones.</p>
+          </div>
+          <label className="flex items-center gap-3 text-sm font-medium text-green-900">
+            <input type="checkbox" checked={formData.whatsappFixedReplyEnabled} onChange={e => setFormData({ ...formData, whatsappFixedReplyEnabled: e.target.checked })} />
+            Responder con mensaje fijo en WhatsApp
+          </label>
+          <label className="block text-sm font-medium text-gray-800" htmlFor="whatsappKeywords">Frases para WhatsApp</label>
+          <textarea id="whatsappKeywords" value={whatsappKeywordText} onChange={e => setWhatsappKeywordText(e.target.value)} rows={2} placeholder="me inscribí, confirmar mi acceso" className="w-full rounded-xl border border-gray-200 p-3 text-sm" />
+          <label className="block text-sm font-medium text-gray-800" htmlFor="whatsappFixedResponse">Respuesta fija de WhatsApp</label>
+          <textarea id="whatsappFixedResponse" value={formData.whatsappFixedResponse} onChange={e => setFormData({ ...formData, whatsappFixedResponse: e.target.value })} rows={4} aria-invalid={whatsappIssue === 'tooLong'} className="w-full rounded-xl border border-gray-200 p-3 text-sm" />
+          {formData.whatsappFixedReplyEnabled && !whatsappKeywords.length && <p className="text-xs text-red-700">Agregá al menos una frase de tres caracteres.</p>}
+          {whatsappPhrasesInvalid && <p className="text-xs text-red-700">Usá hasta 20 frases de entre 3 y 80 caracteres cada una.</p>}
+          {formData.whatsappFixedReplyEnabled && whatsappIssue === 'empty' && <p className="text-xs text-red-700">Escribí la respuesta fija de WhatsApp.</p>}
+          {whatsappIssue === 'tooLong' && <p className="text-xs text-red-700">El mensaje es demasiado largo.</p>}
         </div>
         <div className="space-y-4 rounded-xl border border-pink-200 bg-pink-50 p-4">
           <div>

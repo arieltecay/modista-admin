@@ -34,7 +34,7 @@ export const ResponseModeField = ({ mode, fixedResponse, onModeChange, onFixedRe
             aria-describedby={`${hintId} ${statusId}`} aria-invalid={tooLong}
             placeholder="Ej: ¡Hola! El curso de camisa empieza el sábado. Te dejo el link para inscribirte: …"
             className="w-full rounded-xl border border-gray-200 p-3 text-sm" />
-          <p id={hintId} className="text-xs text-gray-600">Este mensaje se envía tal cual y no usa Gemini. En WhatsApp, Mila sigue usando "Lo que sabe Mila".</p>
+          <p id={hintId} className="text-xs text-gray-600">Este mensaje se envía tal cual y no usa Gemini. WhatsApp tiene su propia respuesta fija configurable.</p>
           <p id={statusId} aria-live="polite" className={`text-xs ${tooLong ? 'font-semibold text-red-700' : 'text-gray-500'}`}>
             {issue === 'empty' && 'Escribí el mensaje para poder guardar. '}
             {tooLong && 'El mensaje es demasiado largo para Instagram (los emojis ocupan más). '}

@@ -16,6 +16,9 @@ const data = {
   instagramCommentReply: false,
   instagramResponseMode: 'fixed' as const,
   instagramFixedResponse: 'Hola 👋\nAtendemos de 9 a 18.',
+  whatsappFixedReplyEnabled: false,
+  whatsappKeywords: [],
+  whatsappFixedResponse: '',
 };
 
 describe('botInstructionService contract', () => {

@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Mensajes permite configurar frases y respuesta fija de WhatsApp para orientar consultas de acceso sin pasar por Mila.
 - Respuestas automáticas: una regla puede enviar en Instagram una respuesta fija, tal cual y sin Gemini, y combinarla con la consulta de inscripciones; las reglas existentes siguen con Mila redactando.
 - Rediseña "Mensajes": Bandeja con búsqueda, reglas de respuesta automática explicadas por canal, plantillas y confirmaciones accesibles, usable en celular. Mismas llamadas al API.
 - Mensajes: pruebas de página y en navegador (escritorio y móvil) que fijan el comportamiento actual, más revisión multiagente en `.ai-review/`.

@@ -56,10 +56,19 @@ export const RuleCard = ({ rule, onEdit, onDelete }: RuleCardProps) => {
         </div>
       )}
 
+      {rule.whatsappFixedReplyEnabled && (
+        <div className="rounded-xl border border-green-200 bg-green-50 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-green-800">Respuesta fija en WhatsApp</p>
+          <p className="mt-1 text-sm text-green-900">{rule.whatsappKeywords.join(', ')}</p>
+          <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-slate-800">{rule.whatsappFixedResponse}</p>
+          <p className="mt-2 text-xs text-green-800">Se envía tal cual, sin Gemini.</p>
+        </div>
+      )}
+
       <div className="rounded-xl bg-slate-50 p-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lo que sabe Mila</p>
         <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-slate-700">{rule.content}</p>
-        <p className="mt-2 text-xs text-slate-500">{sendsFixed ? 'Mila lo usa en WhatsApp; en Instagram se envía la respuesta fija.' : 'Mila redacta con este texto; no lo envía tal cual.'}</p>
+        <p className="mt-2 text-xs text-slate-500">{sendsFixed ? 'Mila usa este contexto si no coincide una respuesta fija; en Instagram se envía la respuesta fija.' : 'Mila redacta con este texto; no lo envía tal cual.'}</p>
       </div>
 
       <footer className="mt-auto flex justify-end gap-2">

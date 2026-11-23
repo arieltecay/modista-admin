@@ -170,10 +170,16 @@ describe('InstructionModal', () => {
 
       await userEvent.click(fixedOption());
       expect(lookup()).toBeChecked();
+      expect(lookup()).toBeEnabled();
       expect(screen.getByText(/preguntas sobre el estado de una inscripción usan la consulta; las demás reciben el mensaje fijo/)).toBeInTheDocument();
       await userEvent.click(save());
 
-      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ instagramResponseMode: 'fixed', instagramEnrollmentLookup: true }));
+      // Both settings are kept apart and saved together.
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+        instagramResponseMode: 'fixed',
+        instagramFixedResponse: 'Hola 👋\nTe paso el link',
+        instagramEnrollmentLookup: true,
+      }));
     });
 
     it('lets a fixed rule turn enrollment lookup on', async () => {

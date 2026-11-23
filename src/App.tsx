@@ -12,6 +12,8 @@ const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
 const AcquisitionPage = lazy(() => import('./pages/acquisition/AcquisitionPage'));
 const InscriptionsListPage = lazy(() => import('./pages/inscriptions/InscriptionsListPage'));
 const InvoicesListPage = lazy(() => import('./pages/invoices/InvoicesListPage'));
+const CouponsPage = lazy(() => import('./pages/coupons/CouponsPage'));
+const CouponDetailPage = lazy(() => import('./pages/coupons/CouponDetailPage'));
 const CourseListPage = lazy(() => import('./pages/courses/CourseListPage'));
 const CourseAddPage = lazy(() => import('./pages/courses/CourseAddPage'));
 const CourseEditPage = lazy(() => import('./pages/courses/CourseEditPage'));
@@ -50,6 +52,8 @@ function App() {
                 <Route path="acquisition" element={<AcquisitionPage />} />
                 <Route path="inscriptions" element={<InscriptionsListPage />} />
                 <Route path="invoices" element={<InvoicesListPage />} />
+                <Route path="coupons" element={<CouponsPage />} />
+                <Route path="coupons/:id" element={<CouponDetailPage />} />
                 <Route path="courses" element={<CourseListPage />} />
                 <Route path="courses/add" element={<CourseAddPage />} />
                 <Route path="courses/edit/:id" element={<CourseEditPage />} />

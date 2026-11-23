@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import InstructionModal from './InstructionModal';
@@ -10,6 +10,22 @@ const fillBasics = async (title: string, content: string) => {
 const save = () => screen.getByRole('button', { name: 'Guardar regla' });
 
 describe('InstructionModal', () => {
+  it('configures an independent fixed WhatsApp reply and requires phrases and text', () => {
+    const onSubmit = vi.fn();
+    render(<InstructionModal isOpen onClose={vi.fn()} onSubmit={onSubmit} loading={false} />);
+    fireEvent.change(screen.getByLabelText('Nombre de la regla'), { target: { value: 'Acceso' } });
+    fireEvent.change(screen.getByLabelText('Lo que sabe Mila'), { target: { value: 'Contexto para Mila' } });
+    fireEvent.click(screen.getByLabelText('Responder con mensaje fijo en WhatsApp'));
+    expect(save()).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Frases para WhatsApp'), { target: { value: 'me inscribí, confirmar mi acceso' } });
+    fireEvent.change(screen.getByLabelText('Respuesta fija de WhatsApp'), { target: { value: 'Revisá tu correo y este WhatsApp.' } });
+    fireEvent.click(save());
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+      whatsappFixedReplyEnabled: true,
+      whatsappKeywords: ['me inscribí', 'confirmar mi acceso'],
+      whatsappFixedResponse: 'Revisá tu correo y este WhatsApp.',
+    }));
+  });
   it('submits the Instagram trigger phrases and enrollment permission', async () => {
     const onSubmit = vi.fn();
     render(<InstructionModal isOpen onClose={vi.fn()} onSubmit={onSubmit} loading={false} />);

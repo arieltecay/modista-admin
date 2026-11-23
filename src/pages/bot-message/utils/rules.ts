@@ -21,6 +21,9 @@ export const toInstructions = (data: unknown): BotInstruction[] =>
           instagramCommentReply: row.instagramCommentReply === true,
           instagramResponseMode: row.instagramResponseMode === 'fixed' ? 'fixed' as const : 'gemini' as const,
           instagramFixedResponse: asText(row.instagramFixedResponse),
+          whatsappFixedReplyEnabled: row.whatsappFixedReplyEnabled === true,
+          whatsappKeywords: asKeywords(row.whatsappKeywords),
+          whatsappFixedResponse: asText(row.whatsappFixedResponse),
         }];
       })
     : [];

@@ -12,6 +12,9 @@ export interface RuleCardData {
   /** On Instagram: 'fixed' sends `fixedResponse` word for word; 'gemini' lets Mila write from `content`. */
   replyMode: 'gemini' | 'fixed';
   fixedResponse: string;
+  whatsappFixedReplyEnabled: boolean;
+  whatsappKeywords: string[];
+  whatsappFixedResponse: string;
 }
 
 export interface RuleCardProps {

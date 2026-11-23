@@ -11,6 +11,9 @@ export interface BotInstruction {
   /** Missing on rules saved before the option existed: read as 'gemini'. */
   instagramResponseMode?: 'gemini' | 'fixed';
   instagramFixedResponse?: string;
+  whatsappFixedReplyEnabled?: boolean;
+  whatsappKeywords?: string[];
+  whatsappFixedResponse?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -27,6 +30,9 @@ export interface BotInstructionFormData {
   instagramResponseMode: 'gemini' | 'fixed';
   /** Kept while the rule is in Gemini mode, so switching back does not lose it. */
   instagramFixedResponse: string;
+  whatsappFixedReplyEnabled: boolean;
+  whatsappKeywords: string[];
+  whatsappFixedResponse: string;
 }
 
 /** Campos de un mensaje de conversación que cambian cómo se muestra. Sin `kind` es un mensaje directo. */

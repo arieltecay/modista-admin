@@ -72,8 +72,7 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const instagramKeywords = [...new Set(keywordText.split(/[,\n]/).map(value => value.trim()).filter(value => value.length >= 3))];
-    // The API rejects a fixed reply that also looks up enrollments: that lookup only works when Mila writes.
-    onSubmit({ ...formData, instagramKeywords, instagramEnrollmentLookup: !isFixed && formData.instagramEnrollmentLookup });
+    onSubmit({ ...formData, instagramKeywords });
   };
 
   return (
@@ -176,7 +175,7 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
               <label className="block text-sm font-medium text-gray-800" htmlFor="instagramKeywords">Frases que activan este bloque</label>
               <textarea id="instagramKeywords" value={keywordText} onChange={e => setKeywordText(e.target.value)} rows={2} placeholder="camisa, cuellos, fecha del curso (mínimo 3 letras)" className="w-full rounded-xl border border-gray-200 p-3 text-sm" />
               <p className="text-xs text-gray-600">Separá las frases con comas o saltos de línea. En modo Gemini, solo el contenido de los bloques coincidentes se envía a Gemini.</p>
-              {formData.instagramAutoReply && !isFixed && (<>
+              {formData.instagramAutoReply && (<>
               <label className="flex items-center gap-3 text-sm text-pink-900">
                 <input type="checkbox" checked={formData.instagramEnrollmentLookup} onChange={e => setFormData({ ...formData, instagramEnrollmentLookup: e.target.checked })} />
                 Permitir consulta de inscripciones en este tema
@@ -193,7 +192,7 @@ const InstructionModal: React.FC<InstructionModalProps> = ({
               onFixedResponseChange={instagramFixedResponse => setFormData({ ...formData, instagramFixedResponse })}
             />
           )}
-          {formData.instagramAutoReply && isFixed && <p className="text-xs text-gray-600">La consulta de inscripciones solo funciona cuando Mila redacta con Gemini.</p>}
+          {formData.instagramAutoReply && isFixed && formData.instagramEnrollmentLookup && <p className="text-xs text-gray-600">En mensajes directos, las preguntas sobre el estado de una inscripción usan la consulta; las demás reciben el mensaje fijo, sin Gemini.</p>}
         </div>
       </form>
     </GlobalModal>

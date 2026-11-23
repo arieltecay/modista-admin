@@ -36,7 +36,7 @@ export const RuleCard = ({ rule, onEdit, onDelete }: RuleCardProps) => {
             </li>
           ))}
         </ul>
-        {rule.enrollmentLookup && rule.instagramDirect && !sendsFixed && <p className="mt-1 text-xs text-amber-700">Puede consultar inscripciones por Instagram.</p>}
+        {rule.enrollmentLookup && rule.instagramDirect && <p className="mt-1 text-xs text-amber-700">Puede consultar inscripciones por Instagram.</p>}
       </div>
 
       {rule.keywords.length > 0 && (

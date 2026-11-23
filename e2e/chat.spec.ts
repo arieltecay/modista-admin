@@ -98,13 +98,14 @@ test('every tab renders its content', async ({ page }) => {
   await expect(page.getByLabel('Responder consultas de inscripción por WhatsApp')).toBeVisible();
 });
 
-test('turns a rule into a fixed Instagram reply and sends it apart from the Mila context', async ({ page }) => {
+test('turns a rule into a fixed Instagram reply with enrollment lookup, apart from the Mila context', async ({ page }) => {
   await page.getByRole('tab', { name: 'Respuestas automáticas' }).click();
   await expect(page.getByRole('article', { name: 'Precio del curso' }).getByText('Se envía tal cual, sin Gemini.')).toBeVisible();
 
   await page.getByRole('button', { name: 'Editar regla Curso camisa' }).click();
   await page.getByRole('radio', { name: /Enviar respuesta fija/ }).check();
   await page.getByLabel('Mensaje que se enviará').fill('Hola 👋\nEl curso empieza el sábado.');
+  await page.getByLabel('Permitir consulta de inscripciones en este tema').check();
   await page.getByRole('button', { name: 'Guardar regla' }).click();
 
   await expect(page.getByRole('button', { name: 'Guardar regla' })).toBeHidden();
@@ -113,7 +114,7 @@ test('turns a rule into a fixed Instagram reply and sends it apart from the Mila
     content: 'El curso comienza el 23 de noviembre.',
     instagramResponseMode: 'fixed',
     instagramFixedResponse: 'Hola 👋\nEl curso empieza el sábado.',
-    instagramEnrollmentLookup: false,
+    instagramEnrollmentLookup: true,
   }) }]);
 });
 

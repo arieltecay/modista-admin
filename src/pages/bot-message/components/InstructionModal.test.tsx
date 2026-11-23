@@ -161,18 +161,27 @@ describe('InstructionModal', () => {
       expect(fixedText()).toHaveValue('Hola 👋\nTe paso el link');
     });
 
-    it('hides enrollment lookup in fixed mode and never submits that contradictory combination', async () => {
+    it('keeps enrollment lookup in fixed mode and explains which questions each one answers', async () => {
       const onSubmit = vi.fn();
       render(<InstructionModal isOpen onClose={vi.fn()} onSubmit={onSubmit} loading={false}
         instruction={{ ...fixedRule, instagramResponseMode: 'gemini', instagramEnrollmentLookup: true }} />);
-      expect(screen.getByLabelText('Permitir consulta de inscripciones en este tema')).toBeChecked();
+      const lookup = () => screen.getByLabelText('Permitir consulta de inscripciones en este tema');
+      expect(lookup()).toBeChecked();
 
       await userEvent.click(fixedOption());
-      expect(screen.queryByLabelText('Permitir consulta de inscripciones en este tema')).not.toBeInTheDocument();
-      expect(screen.getByText(/consulta de inscripciones solo funciona cuando Mila redacta/)).toBeInTheDocument();
+      expect(lookup()).toBeChecked();
+      expect(screen.getByText(/preguntas sobre el estado de una inscripción usan la consulta; las demás reciben el mensaje fijo/)).toBeInTheDocument();
       await userEvent.click(save());
 
-      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ instagramResponseMode: 'fixed', instagramEnrollmentLookup: false }));
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ instagramResponseMode: 'fixed', instagramEnrollmentLookup: true }));
+    });
+
+    it('lets a fixed rule turn enrollment lookup on', async () => {
+      const onSubmit = vi.fn();
+      render(<InstructionModal isOpen onClose={vi.fn()} onSubmit={onSubmit} loading={false} instruction={fixedRule} />);
+      await userEvent.click(screen.getByLabelText('Permitir consulta de inscripciones en este tema'));
+      await userEvent.click(save());
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ instagramResponseMode: 'fixed', instagramEnrollmentLookup: true }));
     });
   });
 });

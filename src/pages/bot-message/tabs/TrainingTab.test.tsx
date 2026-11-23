@@ -66,7 +66,7 @@ describe('TrainingTab (Respuestas automáticas)', () => {
   it('tells a fixed Instagram reply apart from a rule Mila writes from', async () => {
     service.getInstructions.mockResolvedValue([
       instruction,
-      { ...instruction, _id: 'i2', title: 'Precios', instagramResponseMode: 'fixed', instagramFixedResponse: 'El precio está en la web' },
+      { ...instruction, _id: 'i2', title: 'Precios', instagramResponseMode: 'fixed', instagramFixedResponse: 'El precio está en la web', instagramEnrollmentLookup: true },
     ]);
     await renderLoaded();
 
@@ -74,6 +74,7 @@ describe('TrainingTab (Respuestas automáticas)', () => {
     expect(within(fixed).getByText('Respuesta fija en Instagram')).toBeInTheDocument();
     expect(within(fixed).getByText('El precio está en la web')).toBeInTheDocument();
     expect(within(fixed).getByText(/Se envía tal cual, sin Gemini/)).toBeInTheDocument();
+    expect(within(fixed).getByText('Puede consultar inscripciones por Instagram.')).toBeInTheDocument();
     expect(within(rule()).queryByText('Respuesta fija en Instagram')).not.toBeInTheDocument();
     expect(within(rule()).getByText(/Mila redacta con este texto; no lo envía tal cual/)).toBeInTheDocument();
   });

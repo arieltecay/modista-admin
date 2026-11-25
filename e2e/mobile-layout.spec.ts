@@ -30,12 +30,13 @@ const answerWith = (method: string, path: string, params: string[]) => {
   return sectionsAnswer(method, path, params);
 };
 
-/** Boxes a person can drag sideways, described so a failure names the culprit. */
+/** Boxes a person can drag sideways, or that cut their content without an ellipsis, described so a failure names the culprit. */
 const sidewaysScroll = (page: Page) =>
   page.evaluate(() =>
     Array.from(document.querySelectorAll<HTMLElement>('*'))
       .filter((element) => element.clientWidth > 0 && element.scrollWidth > element.clientWidth + 1)
-      .filter((element) => element === document.documentElement || ['auto', 'scroll'].includes(getComputedStyle(element).overflowX))
+      .filter((element) => element === document.documentElement || getComputedStyle(element).overflowX !== 'visible')
+      .filter((element) => element.clientWidth > 1 && getComputedStyle(element).textOverflow !== 'ellipsis')
       .filter((element) => !element.matches('textarea, input, select'))
       .map((element) => `${element.tagName}.${element.className} +${element.scrollWidth - element.clientWidth}px`),
   );
@@ -151,13 +152,16 @@ test('each card label matches its column', async ({ page }) => {
     await page.goto(path);
     await expect(page.locator('.stacked-table')).toHaveCount(tables);
     for (const table of await page.locator('.stacked-table').all()) {
+      // Explicit: the browser may drop the implicit role once CSS changes the display.
+      const roles = await table.evaluate((element) => [element, ...Array.from(element.querySelectorAll('thead, tbody, tr, th, td'))].map((node) => [node.tagName, node.getAttribute('role')].join(' ')));
+      expect(new Set(roles)).toEqual(new Set(['TABLE table', 'THEAD rowgroup', 'TBODY rowgroup', 'TR row', 'TH columnheader', 'TD cell']));
       const headers = (await table.locator('th').allTextContents()).map((text) => text.trim());
       for (const row of await table.locator('tbody tr').all()) {
         expect(await row.locator('td').evaluateAll((cells) => cells.map((cell) => cell.getAttribute('data-label')))).toEqual(headers);
         await expect(row.locator('td').first()).toHaveCSS('display', 'flex');
+        expect(await row.locator('td').first().evaluate((cell) => getComputedStyle(cell, '::before').content)).toBe(`"${headers[0]}"`);
       }
     }
-    for (const role of ['table', 'columnheader', 'cell'] as const) expect(await page.getByRole(role).count()).toBeGreaterThan(0);
   }
 });
 
@@ -206,4 +210,13 @@ test('unbroken text does not widen coupons, their errors or the overview', async
   await expect(tip).toBeVisible();
   const inside = await tip.evaluate((element) => element.getBoundingClientRect().right <= (element.closest('article')?.getBoundingClientRect().right ?? 0) - 1);
   expect(inside).toBe(true);
+});
+
+test('channels can still be sorted on a phone', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto('/admin/acquisition');
+  const table = page.getByRole('table', { name: 'Canales de adquisición' });
+  await table.getByRole('button', { name: 'Visitas' }).click();
+  await expect(table.getByRole('columnheader', { name: 'Visitas' })).toHaveAttribute('aria-sort', 'descending');
+  await expect(table.locator('tbody tr').first()).toContainText('Directo');
 });

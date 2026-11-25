@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { InfoTip } from '.';
@@ -38,5 +38,21 @@ describe('InfoTip', () => {
     await userEvent.click(button);
     await userEvent.click(document.body);
     expect(button).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('stays closed when a touch outside closes it but the focus stays', () => {
+    render(<InfoTip label="Leads" help={{ formula: 'a / b', source: 'Pagos', limits: 'Ninguno conocido' }} />);
+    const button = screen.getByRole('button', { name: /cómo se calcula leads/i });
+    const tip = screen.getByRole('tooltip', { hidden: true });
+    act(() => button.focus());
+    fireEvent.click(button);
+    fireEvent.pointerDown(document.body);
+    fireEvent.mouseLeave(button.parentElement as HTMLElement);
+    expect(button).toHaveFocus();
+    expect(tip).toHaveClass('hidden');
+    expect(tip).not.toHaveClass('sm:group-focus-within:block');
+
+    act(() => button.blur());
+    expect(tip).toHaveClass('sm:group-focus-within:block');
   });
 });

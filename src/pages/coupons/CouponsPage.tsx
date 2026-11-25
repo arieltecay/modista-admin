@@ -83,7 +83,7 @@ const CouponsPage = () => {
           </p>
         )}
         {state.status === 'error' && (
-          <div role="alert" className="p-8 text-center">
+          <div role="alert" className="break-words p-8 text-center">
             <p className="text-red-700">{state.message}</p>
             <button type="button" onClick={reload} className="mt-3 rounded-md border px-4 py-2 text-sm font-medium">
               Reintentar carga

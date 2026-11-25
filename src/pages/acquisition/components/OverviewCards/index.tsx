@@ -32,7 +32,7 @@ export const OverviewCards = ({ overview, coverage, reportingMode, outcomeWindow
         {cards.map((card) => (
           <article key={card.key} className="relative rounded-xl border border-slate-100 bg-slate-50 p-4">
             <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
-              <h3>{card.label}</h3>
+              <h3 className="min-w-0 break-words">{card.label}</h3>
               <InfoTip label={card.label} help={METRIC_HELP[card.key]} />
             </div>
             <p className="mt-1 break-words text-base font-bold sm:text-2xl text-slate-900">{card.value}</p>

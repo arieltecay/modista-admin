@@ -55,19 +55,19 @@ const GlobalModal: FC<GlobalModalProps> = ({
             >
               <Dialog.Panel className={`relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 w-full ${sizeClasses[size]}`}>
                 <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <Dialog.Title as="h3" className="text-xl font-semibold leading-6 text-gray-900">
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <Dialog.Title as="h3" className="min-w-0 break-words text-xl font-semibold leading-6 text-gray-900">
                       {title}
                     </Dialog.Title>
                     <button
                       type="button"
-                      className="rounded-full p-1 text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+                      className="shrink-0 rounded-full p-1 text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
                       onClick={onClose}
                     >
                       <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                     </button>
                   </div>
-                  <div className="mt-2">
+                  <div className="mt-2 break-words">
                     {children}
                   </div>
                 </div>

@@ -51,7 +51,7 @@ export const LiveActivity = ({ data, windowMinutes, timezone, onWindowChange }: 
           {data.activeByChannel.length > 0 && (
             <ul className="flex flex-wrap gap-2 text-xs">
               {data.activeByChannel.map((entry) => (
-                <li key={entry.channelGroup} className="rounded-full bg-slate-100 px-3 py-1">
+                <li key={entry.channelGroup} className="min-w-0 break-words rounded-full bg-slate-100 px-3 py-1">
                   <span>{labelOf(CHANNEL_LABELS, entry.channelGroup)}</span> <strong>{entry.count}</strong>
                 </li>
               ))}
@@ -60,7 +60,7 @@ export const LiveActivity = ({ data, windowMinutes, timezone, onWindowChange }: 
           <ul className="divide-y divide-slate-100 text-sm">
             {data.recentEvents.map((event, index) => (
               <li key={`${event.at}-${event.visit}-${event.name}-${index}`} className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
-                <span className="font-medium text-slate-800">{labelOf(STEP_LABELS, event.name)}</span>
+                <span className="min-w-0 break-words font-medium text-slate-800">{labelOf(STEP_LABELS, event.name)}</span>
                 <span className="min-w-0 break-words text-xs text-slate-500">
                   {formatMinute(event.at, timezone)} · {event.visit}
                   {event.channelGroup ? ` · ${labelOf(CHANNEL_LABELS, event.channelGroup)}` : ''}

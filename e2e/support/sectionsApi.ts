@@ -10,7 +10,7 @@ const coupon = {
   usedCount: 120, active: true, status: 'active', maxUses: 1000, courseId: 'course-1', courseTitle: LONG_TITLE, discountTotal: 12500000, netRevenue: 987654321,
 };
 
-const couponDetail = {
+export const couponDetail = {
   ...coupon,
   stats: {
     started: 240, uses: 120, discountTotal: 12500000, netRevenue: 987654321,
@@ -36,5 +36,19 @@ const ANSWERS: Record<string, unknown> = {
   [`/api/admin/acquisition/journeys/${VISIT_ID}`]: journeyDetailResponse(LONG_VALUE),
 };
 
-/** Read-only answers for the sections other than Messages. Query strings are accepted: their services have their own tests. */
-export const sectionsAnswer = (method: string, path: string): unknown => (method === 'GET' ? ANSWERS[path] : undefined);
+const FILTERS = ['from', 'to', 'timezone'];
+const REPORT = [...FILTERS, 'reportingMode', 'perspective', 'outcomeWindowDays'];
+/** Query params each path sends today; any other makes the call unexpected. */
+const PARAMS: Record<string, string[]> = {
+  '/api/coupons': ['page', 'limit'],
+  '/api/admin/acquisition/overview': REPORT,
+  '/api/admin/acquisition/channels': REPORT,
+  '/api/admin/acquisition/funnel': REPORT,
+  '/api/admin/acquisition/quality': FILTERS,
+  '/api/admin/acquisition/live': ['windowMinutes'],
+  '/api/admin/acquisition/journeys': [...FILTERS, 'page', 'limit'],
+};
+
+/** Read-only answers for the sections other than Messages. */
+export const sectionsAnswer = (method: string, path: string, params: string[]): unknown =>
+  method === 'GET' && params.every((param) => (PARAMS[path] ?? []).includes(param)) ? ANSWERS[path] : undefined;

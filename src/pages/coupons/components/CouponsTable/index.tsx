@@ -32,7 +32,7 @@ export const CouponsTable = ({ rows, busyId, onToggle }: CouponsTableProps) => (
               <CouponStatusBadge status={row.status} />
             </td>
             <td role="cell" data-label="Acciones" className="whitespace-nowrap px-4 py-3">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-end gap-2 md:flex-nowrap md:justify-start">
                 <Link to={`/admin/coupons/${row.id}`} className={`${ACTION} border-indigo-200 text-indigo-700`}>
                   Ver detalle
                 </Link>

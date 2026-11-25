@@ -17,7 +17,7 @@ const CouponDetailPage = () => {
   if (state.status === 'loading') return <p role="status" className="p-8 text-center text-gray-500">Cargando cupón…</p>;
   if (state.status === 'error') {
     return (
-      <div role="alert" className="p-8 text-center">
+      <div role="alert" className="break-words p-8 text-center">
         <p className="text-red-700">{state.message}</p>
         <button type="button" onClick={reload} className="mt-3 rounded-md border px-4 py-2 text-sm font-medium">
           Reintentar carga
@@ -43,7 +43,7 @@ const CouponDetailPage = () => {
           <p className="flex flex-wrap gap-x-2 text-sm text-gray-600">
             <span>{discountLabel(coupon.type, coupon.value)}</span>
             <span aria-hidden="true" className="hidden sm:inline">·</span>
-            <span>{coupon.courseTitle ?? 'Todos los cursos'}</span>
+            <span className="min-w-0 break-words">{coupon.courseTitle ?? 'Todos los cursos'}</span>
           </p>
           <p className="text-sm text-gray-600">
             Vigencia: {formatDate(coupon.startsAt)} – {formatDate(coupon.endsAt)}

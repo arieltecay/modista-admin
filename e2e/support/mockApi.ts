@@ -19,8 +19,8 @@ export interface MockApi {
   failNextSend: () => void;
 }
 
-/** Answers of another section for a method and path; undefined = not its call. */
-type ExtraAnswer = (method: string, path: string) => unknown;
+/** Answers of another section for a method, path and query param names; undefined = not its call. */
+type ExtraAnswer = (method: string, path: string, params: string[]) => unknown;
 
 /** Static assets the admin loads from the internet. Aborted too, but not a failure. */
 const STATIC_ASSET_ORIGINS = new Set(['https://fonts.googleapis.com', 'https://fonts.gstatic.com']);
@@ -86,7 +86,7 @@ export const mockApi = async (page: Page, extraAnswer: ExtraAnswer = () => undef
       sendFails = false;
       return route.fulfill({ status: 500, json: { error: 'Meta rechazó el envío' } });
     }
-    const json = extraAnswer(method, url.pathname) ?? (url.search ? undefined : answer(method, url.pathname));
+    const json = extraAnswer(method, url.pathname, Array.from(new Set(url.search.slice(1).split('&').filter(Boolean).map((pair) => pair.split('=')[0])))) ?? (url.search ? undefined : answer(method, url.pathname));
     if (json === undefined) {
       api.unexpected.push(call);
       return route.fulfill({ status: 404, json: { message: 'Ruta no prevista por el API falso' } });

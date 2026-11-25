@@ -32,8 +32,9 @@ test('tables are still tables', async ({ page }) => {
 });
 
 test('metric help opens by hover and by focus, inside its card, and stays closed after Escape', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 800 });
   await page.goto('/admin/acquisition');
-  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Leads', exact: true }) });
+  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Cobertura de atribución' }) });
   const button = card.getByRole('button');
   const tip = card.getByRole('tooltip');
 
@@ -42,7 +43,9 @@ test('metric help opens by hover and by focus, inside its card, and stays closed
   const [tipBox, cardBox] = [await tip.boundingBox(), await card.boundingBox()];
   expect(tipBox?.x ?? 0).toBeGreaterThanOrEqual(cardBox?.x ?? 0);
   expect((tipBox?.x ?? 0) + (tipBox?.width ?? 0)).toBeLessThanOrEqual((cardBox?.x ?? 0) + (cardBox?.width ?? 0));
-  expect(Math.abs((tipBox?.y ?? 0) - (cardBox?.y ?? 0))).toBeLessThan(60);
+  expect(Math.abs((tipBox?.y ?? 0) - (cardBox?.y ?? 0))).toBeLessThan(80);
+  const buttonBox = await button.boundingBox();
+  expect((buttonBox?.y ?? 0) + (buttonBox?.height ?? 0)).toBeLessThanOrEqual(tipBox?.y ?? 0);
   await page.mouse.move(700, 100);
   await expect(tip).toBeHidden();
 

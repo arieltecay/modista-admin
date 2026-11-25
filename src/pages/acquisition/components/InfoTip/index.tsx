@@ -11,7 +11,7 @@ const VISIBILITY: Record<TipState, string> = {
 /**
  * Formula, source and limits of a metric. Reachable by hover, keyboard focus and tap (touch screens
  * have neither hover nor reliable focus on buttons), and dismissible with Escape or a tap outside.
- * On phones it is a panel at the bottom of the screen, opened only by tap (on focus it could cover its own button); from `sm` it spans the nearest `relative` ancestor (the card).
+ * On phones it is a panel at the bottom of the screen, opened only by tap (on focus it could cover its own button); from `sm` it spans the nearest `relative` ancestor (the card heading).
  * Closed it is `hidden`, not `invisible`: an invisible box still widens the page and makes it scroll sideways.
  */
 export const InfoTip = ({ label, help }: InfoTipProps) => {
@@ -55,7 +55,7 @@ export const InfoTip = ({ label, help }: InfoTipProps) => {
       <span
         role="tooltip"
         id={tipId}
-        className={`fixed inset-x-4 bottom-4 z-20 space-y-1 sm:absolute sm:inset-x-0 sm:bottom-auto sm:top-8 rounded-xl border border-slate-200 bg-white p-3 text-xs font-normal text-slate-600 shadow-lg ${VISIBILITY[state]}`}
+        className={`fixed inset-x-4 bottom-4 z-20 space-y-1 sm:absolute sm:inset-x-0 sm:bottom-auto sm:top-full rounded-xl border border-slate-200 bg-white p-3 text-xs font-normal text-slate-600 shadow-lg ${VISIBILITY[state]}`}
       >
         <span className="block"><strong>Fórmula:</strong> {help.formula}</span>
         <span className="block"><strong>Fuente:</strong> {help.source}</span>

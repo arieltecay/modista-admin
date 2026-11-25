@@ -61,6 +61,7 @@ const GlobalModal: FC<GlobalModalProps> = ({
                     </Dialog.Title>
                     <button
                       type="button"
+                      aria-label="Cerrar"
                       className="shrink-0 rounded-full p-1 text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
                       onClick={onClose}
                     >

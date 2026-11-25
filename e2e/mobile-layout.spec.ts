@@ -177,7 +177,7 @@ test('a template with a long name keeps its status apart and its dialogs readabl
   await card.getByRole('button', { name: /^Enviar prueba/ }).click();
   const heading = page.getByRole('heading', { name: /^Probar/ });
   await expect(heading).toBeVisible();
-  const close = page.getByRole('dialog').getByRole('button').first();
+  const close = page.getByRole('dialog').getByRole('button', { name: 'Cerrar' });
   await expect(close).toBeInViewport({ ratio: 1 });
   expect(await heading.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(0);
   await close.click();

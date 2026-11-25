@@ -1,3 +1,4 @@
+import CreditNoteCell from '../CreditNoteCell';
 import InvoiceStatusBadge from '../InvoiceStatusBadge';
 import { formatDateTime, formatInvoiceNumber, formatMoney } from '../../utils/format';
 import type { InvoiceRow, InvoicesTableProps } from './types';
@@ -11,7 +12,15 @@ const mailCell = (row: InvoiceRow): string => {
 };
 
 /** Texto del servidor (nombre, mail, error): siempre como texto de React, nunca como HTML. */
-export const InvoicesTable = ({ rows, busyId, onResend, onRetry }: InvoicesTableProps) => (
+export const InvoicesTable = ({
+  rows,
+  busyId,
+  onResend,
+  onRetry,
+  onCreditNote,
+  onRetryCreditNote,
+  onResendCreditNote,
+}: InvoicesTableProps) => (
   <div className="overflow-x-auto">
     <table className="min-w-full divide-y divide-gray-200 text-sm">
       <thead className="bg-gray-50">
@@ -37,6 +46,14 @@ export const InvoicesTable = ({ rows, busyId, onResend, onRetry }: InvoicesTable
             <td className="px-4 py-3">
               <InvoiceStatusBadge status={row.status} isTest={row.environment === 'homologation'} />
               {row.status !== 'authorized' && row.lastError && <p className="mt-1 max-w-xs text-xs text-gray-500">{row.lastError}</p>}
+              {row.creditNote && (
+                <CreditNoteCell
+                  note={row.creditNote}
+                  isBusy={busyId === row.id}
+                  onResend={() => onResendCreditNote(row.id)}
+                  onRetry={() => onRetryCreditNote(row.id)}
+                />
+              )}
             </td>
             <td className="whitespace-nowrap px-4 py-3">{mailCell(row)}</td>
             <td className="whitespace-nowrap px-4 py-3">
@@ -49,6 +66,11 @@ export const InvoicesTable = ({ rows, busyId, onResend, onRetry }: InvoicesTable
                 {row.status === 'authorized' && (
                   <button type="button" disabled={busyId === row.id} onClick={() => onResend(row.id)} className={ACTION}>
                     Reenviar mail
+                  </button>
+                )}
+                {row.status === 'authorized' && !row.creditNote && (
+                  <button type="button" disabled={busyId === row.id} onClick={() => onCreditNote(row.id)} className={`${ACTION} border-red-200 text-red-700`}>
+                    Nota de crédito
                   </button>
                 )}
                 {row.status !== 'authorized' && (

@@ -12,6 +12,16 @@ export interface InvoiceRow {
   emailSentAt?: string;
   lastError?: string;
   publicUrl?: string;
+  /** Nota de crédito que anula la factura, si se emitió o se intentó. */
+  creditNote?: {
+    status: 'pending' | 'authorized' | 'failed';
+    pointOfSale: number;
+    number?: number;
+    reason?: string;
+    emailSentAt?: string;
+    lastError?: string;
+    publicUrl?: string;
+  };
 }
 
 export interface InvoicesTableProps {
@@ -20,4 +30,8 @@ export interface InvoicesTableProps {
   busyId: string | null;
   onResend: (id: string) => void;
   onRetry: (id: string) => void;
+  /** Pide emitir la nota de crédito (abre la confirmación). */
+  onCreditNote: (id: string) => void;
+  onRetryCreditNote: (id: string) => void;
+  onResendCreditNote: (id: string) => void;
 }

@@ -19,6 +19,16 @@ export const statusLabel = (status: keyof typeof STATUS_LABELS): string => STATU
 export const formatInvoiceNumber = (pointOfSale: number, number: number | undefined): string =>
   number === undefined ? EMPTY : `${String(pointOfSale).padStart(5, '0')}-${String(number).padStart(8, '0')}`;
 
+const CREDIT_NOTE_LABELS = { authorized: 'Anulada', pending: 'Nota de crédito pendiente', failed: 'Nota de crédito con error' } as const;
+
+export const creditNoteLabel = (status: keyof typeof CREDIT_NOTE_LABELS): string => CREDIT_NOTE_LABELS[status];
+
+const CREDIT_NOTE_TERM_MS = 15 * 24 * 3_600_000;
+
+/** Más de 15 días desde la factura: solo para avisar, nunca para bloquear. */
+export const isPastCreditNoteTerm = (issuedAt: string | undefined, now = Date.now()): boolean =>
+  issuedAt !== undefined && now - new Date(issuedAt).getTime() > CREDIT_NOTE_TERM_MS;
+
 export const formatMoney = (value: number): string => money.format(value);
 
 export const formatDateTime = (iso: string | undefined): string => (iso ? dateTime.format(new Date(iso)) : EMPTY);

@@ -20,6 +20,16 @@ export interface InvoiceItem {
   lastError?: string;
   /** Solo en facturas autorizadas: página pública con el formato oficial. */
   publicUrl?: string;
+  /** Nota de crédito que anula la factura, si se emitió o se intentó. */
+  creditNote?: {
+    status: 'pending' | 'authorized' | 'failed';
+    pointOfSale: number;
+    number?: number;
+    reason?: string;
+    emailSentAt?: string;
+    lastError?: string;
+    publicUrl?: string;
+  };
 }
 
 export interface InvoicesPage {

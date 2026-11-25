@@ -20,7 +20,18 @@ export interface InvoiceListItem {
   courseTitle?: string;
   emailSentAt?: string;
   lastError?: string;
+  issuedAt?: string;
   publicUrl?: string;
+  /** Nota de crédito que anula la factura, si se emitió o se intentó. */
+  creditNote?: {
+    status: 'pending' | 'authorized' | 'failed';
+    pointOfSale: number;
+    number?: number;
+    reason?: string;
+    emailSentAt?: string;
+    lastError?: string;
+    publicUrl?: string;
+  };
 }
 
 export type InvoicesLoadState =

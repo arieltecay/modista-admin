@@ -2,9 +2,10 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import Pagination from '@/components/shared/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
-import { resendInvoice, retryInvoice } from '@/services/invoices/invoiceService';
+import { issueCreditNote, resendCreditNote, resendInvoice, retryCreditNote, retryInvoice } from '@/services/invoices/invoiceService';
+import CreditNoteModal from './components/CreditNoteModal';
 import InvoicesTable from './components/InvoicesTable';
-import type { InvoiceStatusFilter } from './types';
+import type { InvoiceListItem, InvoiceStatusFilter } from './types';
 import { useInvoices } from './useInvoices';
 
 const STATUS_OPTIONS: Array<{ value: InvoiceStatusFilter; label: string }> = [
@@ -32,12 +33,21 @@ const describeRetry = ({ status, issued }: { status: string; issued: boolean }):
   return { ok: false, message: 'La factura sigue pendiente: ARCA no respondió' };
 };
 
+const describeCreditNote = ({ status, issued }: { status: string; issued: boolean }): ActionOutcome => {
+  if (status === 'authorized') {
+    return { ok: true, message: issued ? 'Nota de crédito emitida' : 'La nota de crédito ya estaba emitida' };
+  }
+  if (status === 'failed') return { ok: false, message: 'ARCA rechazó la nota de crédito: revisá el detalle del error' };
+  return { ok: false, message: 'La nota de crédito sigue pendiente: ARCA no respondió' };
+};
+
 const InvoicesListPage = () => {
   const [status, setStatus] = useState<InvoiceStatusFilter>('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [crediting, setCrediting] = useState<InvoiceListItem | null>(null);
   const q = useDebounce(search.trim(), 500);
 
   const { state, reload } = useInvoices({ page, limit, status: status || undefined, q: q || undefined });
@@ -48,11 +58,13 @@ const InvoicesListPage = () => {
     try {
       const outcome = await action();
       (outcome.ok ? toast.success : toast.error)(outcome.message);
-      reload();
     } catch (error) {
       toast.error(errorText(error, failure));
     } finally {
-      setBusyId(null);
+      // Solo libera su fila: otra acción puede seguir en curso.
+      setBusyId((current) => (current === id ? null : current));
+      // También tras un error: el servidor pudo haber completado la acción.
+      reload();
     }
   };
 
@@ -60,6 +72,15 @@ const InvoicesListPage = () => {
     runAction(id, async () => (await resendInvoice(id), { ok: true, message: 'Mail reenviado' }), 'No se pudo reenviar el mail');
   const handleRetry = (id: string) =>
     runAction(id, async () => describeRetry(await retryInvoice(id)), 'No se pudo reintentar la factura');
+
+  const handleCreditNote = async (invoice: InvoiceListItem, reason: string) => {
+    await runAction(invoice.id, async () => describeCreditNote(await issueCreditNote(invoice.id, reason)), 'No se pudo emitir la nota de crédito');
+    setCrediting((current) => (current?.id === invoice.id ? null : current));
+  };
+  const handleRetryCreditNote = (id: string) =>
+    runAction(id, async () => describeCreditNote(await retryCreditNote(id)), 'No se pudo reintentar la nota de crédito');
+  const handleResendCreditNote = (id: string) =>
+    runAction(id, async () => (await resendCreditNote(id), { ok: true, message: 'Mail de la nota reenviado' }), 'No se pudo reenviar el mail');
 
   const total = state.status === 'ready' ? state.total : 0;
 
@@ -119,7 +140,15 @@ const InvoicesListPage = () => {
           </p>
         )}
         {state.status === 'ready' && state.items.length > 0 && (
-          <InvoicesTable rows={state.items} busyId={busyId} onResend={handleResend} onRetry={handleRetry} />
+          <InvoicesTable
+            rows={state.items}
+            busyId={busyId}
+            onResend={handleResend}
+            onRetry={handleRetry}
+            onCreditNote={(id) => setCrediting(state.items.find((item) => item.id === id) ?? null)}
+            onRetryCreditNote={handleRetryCreditNote}
+            onResendCreditNote={handleResendCreditNote}
+          />
         )}
         <Pagination
           currentPage={page}
@@ -134,6 +163,15 @@ const InvoicesListPage = () => {
           }}
         />
       </div>
+
+      {crediting && (
+        <CreditNoteModal
+          invoice={crediting}
+          isBusy={busyId === crediting.id}
+          onClose={() => setCrediting(null)}
+          onConfirm={(reason) => handleCreditNote(crediting, reason)}
+        />
+      )}
     </div>
   );
 };

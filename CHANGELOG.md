@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Facturas: emitir la nota de crédito de una factura autorizada (con motivo y confirmación), verla, reenviarla o reintentarla.
 - Mensajes, Adquisición y Cuponera ya no se desplazan hacia los costados en celular; sus tablas se ven como tarjetas.
 - Mensajes permite configurar frases y respuesta fija de WhatsApp para orientar consultas de acceso sin pasar por Mila.
 - Agrega "Cuponera": crear cupones, ver el historial con su estado y las estadísticas de cada cupón (usos, descuento otorgado, ingreso neto, usos por día).

@@ -17,7 +17,7 @@ export const FunnelView = ({ steps, independentCounts }: FunnelViewProps) => {
           const label = labelOf(FUNNEL_LABELS, step.step);
           const width = Math.round((step.visits / largest) * 100);
           return (
-            <li key={step.step} className="grid grid-cols-[minmax(0,12rem)_1fr_auto] items-center gap-3 text-sm">
+            <li key={step.step} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 text-sm sm:grid-cols-[minmax(0,12rem)_1fr_auto]">
               <span className="truncate text-slate-700">{label}</span>
               <div
                 role="meter"
@@ -26,7 +26,7 @@ export const FunnelView = ({ steps, independentCounts }: FunnelViewProps) => {
                 aria-valuemax={100}
                 aria-valuenow={width}
                 aria-valuetext={formatInteger(step.visits)}
-                className="h-3 overflow-hidden rounded-full bg-slate-100"
+                className="col-span-2 row-start-2 h-3 overflow-hidden sm:col-span-1 sm:row-start-auto rounded-full bg-slate-100"
               >
                 <div className="h-full rounded-full bg-indigo-500" style={{ width: `${width}%` }} />
               </div>

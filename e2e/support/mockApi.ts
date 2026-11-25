@@ -19,6 +19,9 @@ export interface MockApi {
   failNextSend: () => void;
 }
 
+/** Answers of another section for a method and path; undefined = not its call. */
+type ExtraAnswer = (method: string, path: string) => unknown;
+
 /** Static assets the admin loads from the internet. Aborted too, but not a failure. */
 const STATIC_ASSET_ORIGINS = new Set(['https://fonts.googleapis.com', 'https://fonts.gstatic.com']);
 
@@ -55,7 +58,7 @@ const bodyOf = (request: Request) => {
  * anything else (internet, or a real API on another local port) is aborted and recorded.
  * The route is set on the browser context so new tabs are covered too.
  */
-export const mockApi = async (page: Page): Promise<MockApi> => {
+export const mockApi = async (page: Page, extraAnswer: ExtraAnswer = () => undefined): Promise<MockApi> => {
   let sendFails = false;
   const api: MockApi = { calls: [], unexpected: [], blocked: [], failNextSend: () => (sendFails = true) };
 
@@ -83,7 +86,7 @@ export const mockApi = async (page: Page): Promise<MockApi> => {
       sendFails = false;
       return route.fulfill({ status: 500, json: { error: 'Meta rechazó el envío' } });
     }
-    const json = url.search ? undefined : answer(method, url.pathname);
+    const json = extraAnswer(method, url.pathname) ?? (url.search ? undefined : answer(method, url.pathname));
     if (json === undefined) {
       api.unexpected.push(call);
       return route.fulfill({ status: 404, json: { message: 'Ruta no prevista por el API falso' } });

@@ -108,9 +108,9 @@ const TemplatesTab = () => {
         emptyMessage="No hay plantillas en tu cuenta de Meta."
         onRetry={load}
         skeletonClass="h-48 rounded-2xl"
-        skeletonLayoutClass="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        skeletonLayoutClass="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
       >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {templates.map(template => (
             <TemplateCard key={template.id} template={template} onSendTest={id => setTesting(templates.find(t => t.id === id) ?? null)} onDelete={setToDelete} />
           ))}

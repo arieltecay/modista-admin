@@ -22,4 +22,21 @@ describe('InfoTip', () => {
     await userEvent.keyboard('{Escape}');
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
+
+  it('closes with a second tap or a tap outside, and takes no space while closed', async () => {
+    render(<InfoTip label="Leads" help={{ formula: 'a / b', source: 'Pagos', limits: 'Ninguno conocido' }} />);
+    const button = screen.getByRole('button', { name: /cómo se calcula leads/i });
+    const tip = screen.getByRole('tooltip', { hidden: true });
+    expect(tip).toHaveClass('hidden');
+
+    await userEvent.click(button);
+    expect(tip).toHaveClass('block');
+    await userEvent.click(button);
+    expect(tip).toHaveClass('hidden');
+    expect(tip).not.toHaveClass('group-focus-within:block');
+
+    await userEvent.click(button);
+    await userEvent.click(document.body);
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+  });
 });

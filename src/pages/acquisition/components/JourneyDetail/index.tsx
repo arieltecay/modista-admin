@@ -33,16 +33,16 @@ export const JourneyDetail = ({ detail, timezone, onClose }: JourneyDetailProps)
           Cerrar
         </button>
       </div>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm md:grid-cols-3">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm md:grid-cols-3">
         {attribution.filter(([, value]) => value).map(([term, value]) => (
-          <div key={term}>
+          <div key={term} className="min-w-0">
             <dt className="text-xs text-slate-500">{term}</dt>
             <dd className="break-words text-slate-900">{value}</dd>
           </div>
         ))}
       </dl>
       {detail.truncated && <p className="text-sm text-amber-800">Esta visita tiene más eventos de los que se muestran.</p>}
-      <ol className="space-y-1 border-l-2 border-indigo-200 pl-4 text-sm">
+      <ol className="space-y-1 border-l-2 break-words border-indigo-200 pl-4 text-sm">
         {detail.events.map((event, index) => (
           <li key={`${event.occurredAt}-${event.name}-${index}`}>
             <span className="mr-2 tabular-nums text-slate-500">{formatDateTime(event.occurredAt, timezone)}</span>

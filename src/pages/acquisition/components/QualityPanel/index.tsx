@@ -41,7 +41,7 @@ export const QualityPanel = ({ rules, evaluated, capi, identifiers, tracking, ti
       </ul>
     )}
 
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <section aria-label="Entrega a Meta (CAPI)" className="rounded-xl bg-slate-50 p-4 text-sm">
         <h3 className="mb-2 font-semibold text-slate-800">Entrega a Meta (CAPI)</h3>
         <ul className="grid grid-cols-2 gap-1 text-slate-600">

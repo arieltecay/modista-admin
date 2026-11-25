@@ -36,7 +36,7 @@ export const ChatListItem = ({ item, selected, onSelect }: ChatListItemProps) =>
           <span className="text-xs text-slate-400">{item.time}</span>
         </span>
       </span>
-      <span className="truncate pl-6 text-sm text-slate-500">{item.lastMessage}</span>
+      <span className="w-full truncate pl-6 text-sm text-slate-500">{item.lastMessage}</span>
     </button>
   </li>
 );

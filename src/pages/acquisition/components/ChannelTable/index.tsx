@@ -36,8 +36,8 @@ export const ChannelTable = ({ rows, unlinked, isCohort }: ChannelTableProps) =>
     );
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-left text-sm">
+    <div className="relative overflow-x-auto">
+      <table className="stacked-table stacked-table-sortable min-w-full text-left text-sm">
         <caption className="sr-only">Canales de adquisición</caption>
         <thead className="text-xs uppercase tracking-wide text-slate-500">
           <tr>
@@ -58,30 +58,30 @@ export const ChannelTable = ({ rows, unlinked, isCohort }: ChannelTableProps) =>
         <tbody className="divide-y divide-slate-100 text-slate-700">
           {sorted.map((row) => (
             <tr key={`${row.channelGroup}-${row.sourcePlatform}`}>
-              <td className="px-3 py-2 font-medium text-slate-900">{labelOf(CHANNEL_LABELS, row.channelGroup)}</td>
-              <td className="px-3 py-2 text-slate-500">{row.sourcePlatform}</td>
-              <td className="px-3 py-2">{formatInteger(row.visits)}</td>
-              <td className="px-3 py-2">{formatInteger(row.leads)}</td>
-              <td className="px-3 py-2">{formatInteger(row.purchases)}</td>
-              <td className="px-3 py-2">{isCohort ? formatPercent(row.leadRate) : '—'}</td>
-              <td className="px-3 py-2">{isCohort ? formatPercent(row.purchaseRate) : '—'}</td>
-              <td className="px-3 py-2">{formatCurrency(row.revenue)}</td>
-              <td className="px-3 py-2">{formatCurrency(row.averageTicket)}</td>
-              <td className="px-3 py-2">{formatPercent(row.revenueShare)}</td>
+              <td data-label="Canal" className="px-3 py-2 font-medium text-slate-900">{labelOf(CHANNEL_LABELS, row.channelGroup)}</td>
+              <td data-label="Plataforma" className="px-3 py-2 text-slate-500">{row.sourcePlatform}</td>
+              <td data-label="Visitas" className="px-3 py-2">{formatInteger(row.visits)}</td>
+              <td data-label="Leads" className="px-3 py-2">{formatInteger(row.leads)}</td>
+              <td data-label="Compras" className="px-3 py-2">{formatInteger(row.purchases)}</td>
+              <td data-label="Tasa lead" className="px-3 py-2">{isCohort ? formatPercent(row.leadRate) : '—'}</td>
+              <td data-label="Tasa compra" className="px-3 py-2">{isCohort ? formatPercent(row.purchaseRate) : '—'}</td>
+              <td data-label="Ingresos" className="px-3 py-2">{formatCurrency(row.revenue)}</td>
+              <td data-label="Ticket promedio" className="px-3 py-2">{formatCurrency(row.averageTicket)}</td>
+              <td data-label="Participación" className="px-3 py-2">{formatPercent(row.revenueShare)}</td>
             </tr>
           ))}
           {unlinked && (
             <tr className="bg-slate-50 italic">
-              <td className="px-3 py-2">Conversiones sin recorrido enlazable</td>
-              <td className="px-3 py-2">—</td>
-              <td className="px-3 py-2">—</td>
-              <td className="px-3 py-2">{formatInteger(unlinked.leads)}</td>
-              <td className="px-3 py-2">{formatInteger(unlinked.purchases)}</td>
-              <td className="px-3 py-2">—</td>
-              <td className="px-3 py-2">—</td>
-              <td className="px-3 py-2">{formatCurrency(unlinked.revenue)}</td>
-              <td className="px-3 py-2">—</td>
-              <td className="px-3 py-2">—</td>
+              <td data-label="Canal" className="px-3 py-2">Conversiones sin recorrido enlazable</td>
+              <td data-label="Plataforma" className="px-3 py-2">—</td>
+              <td data-label="Visitas" className="px-3 py-2">—</td>
+              <td data-label="Leads" className="px-3 py-2">{formatInteger(unlinked.leads)}</td>
+              <td data-label="Compras" className="px-3 py-2">{formatInteger(unlinked.purchases)}</td>
+              <td data-label="Tasa lead" className="px-3 py-2">—</td>
+              <td data-label="Tasa compra" className="px-3 py-2">—</td>
+              <td data-label="Ingresos" className="px-3 py-2">{formatCurrency(unlinked.revenue)}</td>
+              <td data-label="Ticket promedio" className="px-3 py-2">—</td>
+              <td data-label="Participación" className="px-3 py-2">—</td>
             </tr>
           )}
         </tbody>

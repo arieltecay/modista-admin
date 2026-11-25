@@ -8,11 +8,11 @@ const STATUS_OPTIONS: Array<{ value: CouponsFiltersProps['status']; label: strin
   { value: 'expired', label: 'Vencidos' },
   { value: 'exhausted', label: 'Agotados' },
 ];
-const FIELD = 'rounded-md border border-gray-300 px-3 py-2 text-sm';
+const FIELD = 'w-full min-w-0 sm:max-w-sm rounded-md border border-gray-300 px-3 py-2 text-sm';
 
 export const CouponsFilters = ({ status, courseId, courses, onStatusChange, onCourseChange }: CouponsFiltersProps) => (
-  <div className="flex flex-wrap items-end gap-4">
-    <div className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+  <div className="grid grid-cols-1 gap-4 sm:flex sm:flex-wrap sm:items-end">
+    <div className="flex min-w-0 flex-col gap-1 text-sm font-medium text-gray-700">
       <label htmlFor="filter-status">Estado</label>
       <select id="filter-status" value={status} onChange={(event) => onStatusChange(event.target.value as CouponsFiltersProps['status'])} className={FIELD}>
         {STATUS_OPTIONS.map((option) => (
@@ -22,7 +22,7 @@ export const CouponsFilters = ({ status, courseId, courses, onStatusChange, onCo
         ))}
       </select>
     </div>
-    <div className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+    <div className="flex min-w-0 flex-col gap-1 text-sm font-medium text-gray-700">
       <label htmlFor="filter-course">Filtrar por curso</label>
       <select id="filter-course" value={courseId} onChange={(event) => onCourseChange(event.target.value)} className={FIELD}>
         <option value="">Todos los cursos</option>

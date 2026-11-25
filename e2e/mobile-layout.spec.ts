@@ -112,3 +112,29 @@ test('messages do not move sideways in the inbox, a conversation or any tab', as
     await expectNoSidewaysScroll(page, `messages-${tab}`);
   }
 });
+
+test('a closed metric help does not reopen by focus, and the first tap always opens it', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto('/admin/acquisition');
+  const tips = page.getByRole('button', { name: /^Cómo se calcula/ });
+  const open = page.getByRole('tooltip').filter({ visible: true });
+  await expect(tips.first()).toBeVisible();
+
+  await tips.first().click();
+  await expect(open).toHaveCount(1);
+  await tips.first().click();
+  await page.mouse.move(5, 400);
+  await expect(open).toHaveCount(0);
+
+  // A touch that becomes a scroll sends pointerdown but never moves the focus.
+  await tips.first().click();
+  await page.mouse.move(5, 400);
+  await page.getByRole('heading', { name: 'Resumen' }).dispatchEvent('pointerdown');
+  await expect(open).toHaveCount(0);
+
+  await tips.nth(1).focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await expect(tips.nth(1)).toHaveAttribute('aria-expanded', 'false');
+  await expect(open).toHaveCount(0);
+});

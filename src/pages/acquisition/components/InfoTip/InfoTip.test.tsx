@@ -33,7 +33,7 @@ describe('InfoTip', () => {
     expect(tip).toHaveClass('block');
     await userEvent.click(button);
     expect(tip).toHaveClass('hidden');
-    expect(tip).not.toHaveClass('group-focus-within:block');
+    expect(tip).not.toHaveClass('sm:group-focus-within:block');
 
     await userEvent.click(button);
     await userEvent.click(document.body);

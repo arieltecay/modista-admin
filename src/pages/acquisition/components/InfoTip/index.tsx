@@ -5,7 +5,7 @@ import type { InfoTipProps } from './types';
 /**
  * Formula, source and limits of a metric. Reachable by hover, keyboard focus and tap (touch screens
  * have neither hover nor reliable focus on buttons), and dismissible with Escape or a tap outside.
- * On phones it is a panel at the bottom of the screen; from `sm` it spans the nearest `relative` ancestor (the card).
+ * On phones it is a panel at the bottom of the screen, opened only by tap (on focus it could cover its own button); from `sm` it spans the nearest `relative` ancestor (the card).
  * Closed it is `hidden`, not `invisible`: an invisible box still widens the page and makes it scroll sideways.
  */
 export const InfoTip = ({ label, help }: InfoTipProps) => {
@@ -17,16 +17,29 @@ export const InfoTip = ({ label, help }: InfoTipProps) => {
   useEffect(() => {
     if (!isOpen) return;
     const closeOutside = (event: PointerEvent) => {
-      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setIsOpen(false);
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) {
+        setIsOpen(false);
+        // A touch that becomes a scroll keeps the focus here, and focus alone would show it again.
+        setIsDismissed(true);
+      }
     };
     document.addEventListener('pointerdown', closeOutside);
     return () => document.removeEventListener('pointerdown', closeOutside);
   }, [isOpen]);
 
-  const visibility = isOpen ? 'block' : isDismissed ? 'hidden' : 'hidden group-focus-within:block group-hover:block';
+  const visibility = isOpen ? 'block' : isDismissed ? 'hidden' : 'hidden sm:group-focus-within:block sm:group-hover:block';
+
+  // While the button keeps the focus, a dismissed tip must stay closed.
+  const allowHoverAgain = () => {
+    if (!rootRef.current?.contains(document.activeElement)) setIsDismissed(false);
+  };
+  const reset = () => {
+    setIsOpen(false);
+    setIsDismissed(false);
+  };
 
   return (
-    <span ref={rootRef} className="group inline-flex" onMouseLeave={() => setIsDismissed(false)} onBlur={() => setIsDismissed(false)}>
+    <span ref={rootRef} className="group inline-flex" onMouseEnter={allowHoverAgain} onMouseLeave={allowHoverAgain} onBlur={reset}>
       <button
         type="button"
         aria-label={`Cómo se calcula ${label}`}

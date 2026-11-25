@@ -115,9 +115,9 @@ const TrainingTab = () => {
         emptyMessage={<><p className="font-medium">Todavía no hay reglas.</p><p>Mientras tanto, Mila usa su personalidad por defecto en WhatsApp y no responde en Instagram.</p></>}
         onRetry={load}
         skeletonClass="h-56 rounded-2xl"
-        skeletonLayoutClass="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        skeletonLayoutClass="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
       >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {instructions.map(instruction => (
             <RuleCard key={instruction._id} rule={toRule(instruction)} onEdit={id => open(byId(id))} onDelete={id => setToDelete(byId(id))} />
           ))}

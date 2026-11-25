@@ -44,9 +44,9 @@ const CouponsPage = () => {
   };
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
+    <div className="space-y-6 pb-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-gray-900">Cuponera</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Cuponera</h1>
         <button type="button" onClick={openForm} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">
           Nuevo cupón
         </button>
@@ -83,7 +83,7 @@ const CouponsPage = () => {
           </p>
         )}
         {state.status === 'error' && (
-          <div role="alert" className="p-8 text-center">
+          <div role="alert" className="break-words p-8 text-center">
             <p className="text-red-700">{state.message}</p>
             <button type="button" onClick={reload} className="mt-3 rounded-md border px-4 py-2 text-sm font-medium">
               Reintentar carga

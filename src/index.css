@@ -24,3 +24,60 @@
   --font-atelier-serif: "Source Serif 4", Georgia, serif;
   --font-atelier-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
+
+/*
+  Tablas anchas en celular: cada fila se ve como tarjeta "etiqueta: valor" (la etiqueta sale de
+  `data-label`). Es la misma tabla, sin duplicar el contenido en otro componente.
+  Con `stacked-table-sortable` los encabezados quedan visibles como botones de orden.
+*/
+@layer components {
+  @media (width < 48rem) {
+    .stacked-table,
+    .stacked-table tbody,
+    .stacked-table tr {
+      display: block;
+    }
+
+    .stacked-table tbody tr {
+      padding-block: 0.5rem;
+    }
+
+    .stacked-table td {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      /* Gana a los `py-*` de escritorio: la tarjeta tiene muchas líneas. */
+      padding-block: 0.25rem !important;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .stacked-table td::before {
+      content: attr(data-label);
+      flex-shrink: 0;
+      font-size: 0.75rem;
+      font-weight: 500;
+      font-style: normal;
+      font-family: var(--font-sans);
+      color: var(--color-slate-500);
+    }
+
+    .stacked-table:not(.stacked-table-sortable) thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    .stacked-table-sortable thead {
+      display: block;
+    }
+
+    .stacked-table-sortable thead tr {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
+}

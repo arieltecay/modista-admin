@@ -13,7 +13,7 @@ const EnrollmentSettings: React.FC<EnrollmentSettingsProps> = ({ value, defaults
   const setTemplate = (key: TemplateKey, text: string) => setTemplates(current => ({ ...current, [key]: text }));
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div className="space-y-6">
         <section className="rounded-2xl border bg-white p-5 shadow-sm">
           <label className="flex items-start gap-3">
@@ -45,7 +45,7 @@ const EnrollmentSettings: React.FC<EnrollmentSettingsProps> = ({ value, defaults
       <div className="space-y-4">
         <section className="rounded-2xl border bg-white p-5 shadow-sm">
           <h3 className="mb-2 font-semibold text-gray-800">Vista previa</h3>
-          <pre data-testid="enrollment-preview" className="whitespace-pre-wrap rounded-xl bg-green-50 p-3 text-sm text-gray-800">{buildPreview(templates)}</pre>
+          <pre data-testid="enrollment-preview" className="whitespace-pre-wrap break-words rounded-xl bg-green-50 p-3 text-sm text-gray-800">{buildPreview(templates)}</pre>
         </section>
         <div className="flex flex-wrap gap-3">
           <button type="button" disabled={saving || hasErrors} onClick={() => onSave({ whatsappLookupEnabled, templates: customizedTemplates(templates, defaults) })} className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md disabled:opacity-50">

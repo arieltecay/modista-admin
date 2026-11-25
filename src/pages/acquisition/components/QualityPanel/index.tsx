@@ -21,10 +21,10 @@ export const QualityPanel = ({ rules, evaluated, capi, identifiers, tracking, ti
     ) : (
       <ul className="space-y-3">
         {rules.map((rule) => (
-          <li key={rule.code} className="rounded-xl border border-slate-200 p-4">
+          <li key={rule.code} className="break-words rounded-xl border border-slate-200 p-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${SEVERITY_STYLE[rule.severity]}`}>{labelOf(SEVERITY_LABELS, rule.severity)}</span>
-              <span className="font-semibold text-slate-900">{labelOf(RULE_TITLES, rule.code)}</span>
+              <span className="min-w-0 break-words font-semibold text-slate-900">{labelOf(RULE_TITLES, rule.code)}</span>
               <span className="text-xs text-slate-500">
                 {formatInteger(rule.affected)} de {formatInteger(rule.universe)} ({formatPercent(rule.percentage)})
               </span>
@@ -41,7 +41,7 @@ export const QualityPanel = ({ rules, evaluated, capi, identifiers, tracking, ti
       </ul>
     )}
 
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <section aria-label="Entrega a Meta (CAPI)" className="rounded-xl bg-slate-50 p-4 text-sm">
         <h3 className="mb-2 font-semibold text-slate-800">Entrega a Meta (CAPI)</h3>
         <ul className="grid grid-cols-2 gap-1 text-slate-600">

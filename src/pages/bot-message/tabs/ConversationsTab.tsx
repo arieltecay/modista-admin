@@ -67,7 +67,7 @@ const ConversationsTab = ({ active }: ConversationsTabProps) => {
 
   const close = () => setDialog(null);
   return (
-    <div className="grid h-full min-h-0 gap-4 md:grid-cols-[minmax(16rem,22rem)_1fr]">
+    <div className="grid h-full min-h-0 grid-cols-1 gap-4 md:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)]">
       <div className={`${showList ? 'block' : 'hidden'} min-h-0 md:block`}>
         <ChatList
           items={entries}

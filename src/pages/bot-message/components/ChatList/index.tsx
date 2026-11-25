@@ -38,7 +38,7 @@ export const ChatList = ({
         />
       </label>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div role="group" aria-label="Filtrar por canal" className="flex gap-1">
+        <div role="group" aria-label="Filtrar por canal" className="flex flex-wrap gap-1">
           {FILTERS.map(({ id, label }) => (
             <button
               key={id}

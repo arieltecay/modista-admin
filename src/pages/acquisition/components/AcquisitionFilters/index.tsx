@@ -10,7 +10,7 @@ const TIMEZONES = ['America/Argentina/Tucuman', 'America/Argentina/Buenos_Aires'
 const MODES = [['acquisition_cohort', 'Cohorte de adquisición'], ['event_period', 'Eventos del período']] as const;
 const PERSPECTIVES = [['visit_touch', 'Origen de la propia visita'], ['first_touch', 'Primer origen conocido'], ['last_non_direct', 'Último origen no directo']] as const;
 const FIELD = 'flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-500';
-const CONTROL = 'rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400';
+const CONTROL = 'w-full min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400';
 
 export const AcquisitionFilters = ({ filters, onChange, onRefresh, isRefreshing }: AcquisitionFiltersProps) => {
   const id = useId();

@@ -14,7 +14,7 @@ export const UsageByDay = ({ days }: UsageByDayProps) => {
           <span className="h-3 flex-1 overflow-hidden rounded bg-gray-100" aria-hidden="true">
             <span className="block h-full rounded bg-indigo-500" style={{ width: `${(entry.uses / peak) * 100}%` }} />
           </span>
-          <span className="w-8 text-right font-semibold text-gray-900">{entry.uses}</span>
+          <span className="min-w-8 text-right font-semibold text-gray-900">{entry.uses}</span>
         </li>
       ))}
     </ul>

@@ -5,7 +5,7 @@ import { toCreateData, validateCouponForm } from '../../utils/validation';
 import type { CouponFormErrors, CouponFormValues, CouponKind } from '../../types';
 import type { CouponFormProps } from './types';
 
-const INPUT = 'w-full rounded-md border border-gray-300 px-3 py-2 text-sm';
+const INPUT = 'w-full min-w-0 rounded-md border border-gray-300 px-3 py-2 text-sm';
 const KINDS: Array<{ value: CouponKind; label: string }> = [
   { value: 'percent', label: 'Porcentaje (%)' },
   { value: 'fixed', label: 'Monto fijo ($)' },
@@ -38,7 +38,7 @@ export const CouponForm = ({ courses, submitting, onSubmit, onCancel, serverErro
         </div>
       </FormField>
 
-      <fieldset className="flex gap-4 text-sm">
+      <fieldset className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
         <legend className="mb-1 font-medium text-gray-700">Tipo de descuento</legend>
         {KINDS.map((kind) => (
           <label key={kind.value} className="flex items-center gap-2">
@@ -63,7 +63,7 @@ export const CouponForm = ({ courses, submitting, onSubmit, onCancel, serverErro
         </select>
       </FormField>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField id="coupon-starts" label="Desde" error={errors.startsAt}>
           <input id="coupon-starts" type="date" value={values.startsAt} onChange={set('startsAt')} className={INPUT} />
         </FormField>

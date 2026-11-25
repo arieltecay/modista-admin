@@ -17,7 +17,7 @@ const CouponDetailPage = () => {
   if (state.status === 'loading') return <p role="status" className="p-8 text-center text-gray-500">Cargando cupón…</p>;
   if (state.status === 'error') {
     return (
-      <div role="alert" className="p-8 text-center">
+      <div role="alert" className="break-words p-8 text-center">
         <p className="text-red-700">{state.message}</p>
         <button type="button" onClick={reload} className="mt-3 rounded-md border px-4 py-2 text-sm font-medium">
           Reintentar carga
@@ -29,21 +29,21 @@ const CouponDetailPage = () => {
   const { coupon } = state;
   const { stats } = coupon;
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <div className="space-y-6 pb-8">
       <Link to="/admin/coupons" className="text-sm text-indigo-700">
         ← Volver a la cuponera
       </Link>
 
       <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="font-mono text-2xl font-bold text-gray-900">{coupon.code}</h1>
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="break-all font-mono text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{coupon.code}</h1>
             <CouponStatusBadge status={coupon.status} />
           </div>
-          <p className="flex gap-2 text-sm text-gray-600">
+          <p className="flex flex-wrap gap-x-2 text-sm text-gray-600">
             <span>{discountLabel(coupon.type, coupon.value)}</span>
-            <span aria-hidden="true">·</span>
-            <span>{coupon.courseTitle ?? 'Todos los cursos'}</span>
+            <span aria-hidden="true" className="hidden sm:inline">·</span>
+            <span className="min-w-0 break-words">{coupon.courseTitle ?? 'Todos los cursos'}</span>
           </p>
           <p className="text-sm text-gray-600">
             Vigencia: {formatDate(coupon.startsAt)} – {formatDate(coupon.endsAt)}

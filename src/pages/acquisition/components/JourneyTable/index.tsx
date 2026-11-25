@@ -8,29 +8,31 @@ const HEADERS = ['ID', 'Inicio', 'Última actividad', 'Canal', 'Landing', 'Dispo
 
 export const JourneyTable = ({ journeys, pagination, timezone, onSelect, onPageChange }: JourneyTableProps) => (
   <div className="space-y-3">
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-left text-sm">
+    <div className="relative overflow-x-auto">
+      <table role="table" className="stacked-table min-w-full text-left text-sm">
         <caption className="sr-only">Recorridos de visitantes (identificadores abreviados)</caption>
-        <thead className="text-xs uppercase tracking-wide text-slate-500">
-          <tr>{HEADERS.map((header, index) => <th key={`${header}-${index}`} scope="col" className="px-3 py-2 font-semibold">{header === 'Acciones' ? <span className="sr-only">{header}</span> : header}</th>)}</tr>
+        <thead role="rowgroup" className="text-xs uppercase tracking-wide text-slate-500">
+          <tr role="row">{HEADERS.map((header, index) => <th role="columnheader" key={`${header}-${index}`} scope="col" className="px-3 py-2 font-semibold">{header === 'Acciones' ? <span className="sr-only">{header}</span> : header}</th>)}</tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 text-slate-700">
+        <tbody role="rowgroup" className="divide-y divide-slate-100 text-slate-700">
           {journeys.map((journey) => (
-            <tr key={journey.visitId}>
-              <td className="px-3 py-2"><code className="text-xs">{shortId(journey.visitId)}</code></td>
-              <td className="px-3 py-2">{formatDateTime(journey.startedAt, timezone)}</td>
-              <td className="px-3 py-2">{formatDateTime(journey.lastActivityAt, timezone)}</td>
-              <td className="px-3 py-2">{labelOf(CHANNEL_LABELS, journey.channelGroup)}</td>
-              <td className="px-3 py-2">{journey.landingSlug ?? '—'}</td>
-              <td className="px-3 py-2">{labelOf(DEVICE_LABELS, journey.device)}</td>
-              <td className="px-3 py-2">
-                {journeyStepLabel(journey.maxStep)}
-                {journey.truncated && <span className="ml-1 rounded bg-amber-100 px-1 text-xs text-amber-800" title="Tiene más eventos de los que se muestran">Truncado</span>}
+            <tr role="row" key={journey.visitId}>
+              <td role="cell" data-label="ID" className="px-3 py-2"><code className="text-xs">{shortId(journey.visitId)}</code></td>
+              <td role="cell" data-label="Inicio" className="px-3 py-2">{formatDateTime(journey.startedAt, timezone)}</td>
+              <td role="cell" data-label="Última actividad" className="px-3 py-2">{formatDateTime(journey.lastActivityAt, timezone)}</td>
+              <td role="cell" data-label="Canal" className="px-3 py-2">{labelOf(CHANNEL_LABELS, journey.channelGroup)}</td>
+              <td role="cell" data-label="Landing" className="px-3 py-2">{journey.landingSlug ?? '—'}</td>
+              <td role="cell" data-label="Dispositivo" className="px-3 py-2">{labelOf(DEVICE_LABELS, journey.device)}</td>
+              <td role="cell" data-label="Paso máximo" className="px-3 py-2">
+                <span>
+                  {journeyStepLabel(journey.maxStep)}
+                  {journey.truncated && <span className="ml-1 rounded bg-amber-100 px-1 text-xs text-amber-800" title="Tiene más eventos de los que se muestran">Truncado</span>}
+                </span>
               </td>
-              <td className="px-3 py-2">{journey.hasLead ? 'Sí' : 'No'}</td>
-              <td className="px-3 py-2">{journey.hasPurchase ? 'Sí' : 'No'}</td>
-              <td className="px-3 py-2">{formatCurrency(journey.revenue)}</td>
-              <td className="px-3 py-2">
+              <td role="cell" data-label="Lead" className="px-3 py-2">{journey.hasLead ? 'Sí' : 'No'}</td>
+              <td role="cell" data-label="Compra" className="px-3 py-2">{journey.hasPurchase ? 'Sí' : 'No'}</td>
+              <td role="cell" data-label="Ingresos" className="px-3 py-2">{formatCurrency(journey.revenue)}</td>
+              <td role="cell" data-label="Acciones" className="px-3 py-2">
                 <button
                   type="button"
                   onClick={() => onSelect(journey.visitId)}
@@ -45,7 +47,7 @@ export const JourneyTable = ({ journeys, pagination, timezone, onSelect, onPageC
         </tbody>
       </table>
     </div>
-    <nav aria-label="Paginación de recorridos" className="flex items-center justify-between text-sm text-slate-600">
+    <nav aria-label="Paginación de recorridos" className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
       <span>Página {pagination.page} de {Math.max(1, pagination.totalPages)} · {formatInteger(pagination.total)} recorridos</span>
       <div className="flex gap-2">
         <button type="button" disabled={pagination.page <= 1} onClick={() => onPageChange(pagination.page - 1)} className="rounded-lg border border-slate-200 px-3 py-1 disabled:opacity-40">

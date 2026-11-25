@@ -31,11 +31,11 @@ export const OverviewCards = ({ overview, coverage, reportingMode, outcomeWindow
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
         {cards.map((card) => (
           <article key={card.key} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-            <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
-              <h3>{card.label}</h3>
+            <div className="relative flex items-center gap-1 text-xs font-medium text-slate-500">
+              <h3 className="min-w-0 break-words">{card.label}</h3>
               <InfoTip label={card.label} help={METRIC_HELP[card.key]} />
             </div>
-            <p className="mt-1 text-2xl font-bold text-slate-900">{card.value}</p>
+            <p className="mt-1 break-words text-base font-bold sm:text-2xl text-slate-900">{card.value}</p>
           </article>
         ))}
       </div>

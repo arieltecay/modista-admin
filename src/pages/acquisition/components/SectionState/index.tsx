@@ -39,7 +39,7 @@ export const SectionState = ({ title, isLoading, hasError, isEmpty, emptyMessage
   };
 
   return (
-    <section aria-labelledby={headingId} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section aria-labelledby={headingId} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
       <h2 id={headingId} className="text-lg font-bold text-slate-900">{title}</h2>
       {body()}
     </section>

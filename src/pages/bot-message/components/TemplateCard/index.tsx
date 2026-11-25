@@ -23,7 +23,7 @@ export const TemplateCard = ({ template, onSendTest, onDelete }: TemplateCardPro
       </header>
       <div className="flex-1 bg-emerald-50/60 p-4">
         <div className="rounded-xl rounded-tl-sm border border-slate-100 bg-white p-3 text-sm text-slate-700 shadow-sm">
-          <p className="whitespace-pre-wrap">{template.body || 'Sin contenido'}</p>
+          <p className="whitespace-pre-wrap break-words">{template.body || 'Sin contenido'}</p>
           <p className="mt-1 text-right text-[10px] text-slate-400">{template.language}</p>
         </div>
       </div>

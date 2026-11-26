@@ -21,10 +21,28 @@ export const couponDetail = {
 
 const journeys = journeysResponse();
 
+const invoice = {
+  id: 'i1', status: 'authorized', environment: 'production', pointOfSale: 3, number: 128, total: 125000, attempts: 1,
+  receiver: { name: 'Maximiliana Guadalupe Fernández Etchegaray', email: 'maximiliana.fernandez.etchegaray@example.com' },
+  createdAt: '2026-11-19T12:00:00.000Z', issuedAt: '2026-11-19T12:00:00.000Z', courseTitle: LONG_TITLE,
+  emailSentAt: '2026-11-19T12:01:00.000Z', publicUrl: 'https://modista-app.com/factura/a',
+};
+
+/** One invoice of each shape: with nothing to do yet, credited, and refused by ARCA. */
+const invoices = [
+  invoice,
+  {
+    ...invoice, id: 'i2', number: 129,
+    creditNote: { status: 'authorized', pointOfSale: 3, number: 7, reason: `Baja del curso: ${LONG_VALUE}`, emailSentAt: '2026-11-20T12:00:00.000Z', publicUrl: 'https://modista-app.com/factura/b' },
+  },
+  { ...invoice, id: 'i3', status: 'failed', number: 130, publicUrl: undefined, emailSentAt: undefined, lastError: `10015: ${LONG_VALUE}` },
+];
+
 /** Deliberately long fictional data: what breaks a phone layout when a section does not wrap. */
 const ANSWERS: Record<string, unknown> = {
   '/api/coupons': { items: [coupon, { ...coupon, id: 'c2', code: 'HOLA10', type: 'percent', value: 10, active: false, status: 'paused', maxUses: null }], page: 1, limit: 10, total: 25 },
   '/api/coupons/c1': couponDetail,
+  '/api/invoices': { items: invoices, page: 1, limit: 20, total: 3 },
   '/api/coupons/summary': { activeCoupons: 12, uses: 340, discountTotal: 12500000, netRevenue: 987654321 },
   '/api/courses': [{ _id: 'm1', uuid: 'course-1', id: 'course-1', title: LONG_TITLE, price: 125000 }],
   '/api/admin/acquisition/overview': overviewResponse({ revenue: 987654321, unlinked: { leads: 1, purchases: 1, partialPayments: 0, revenue: 5000 } }),
@@ -41,6 +59,7 @@ const REPORT = [...FILTERS, 'reportingMode', 'perspective', 'outcomeWindowDays']
 /** Query params each path sends today; any other makes the call unexpected. */
 const PARAMS: Record<string, string[]> = {
   '/api/coupons': ['page', 'limit'],
+  '/api/invoices': ['page', 'limit'],
   '/api/admin/acquisition/overview': REPORT,
   '/api/admin/acquisition/channels': REPORT,
   '/api/admin/acquisition/funnel': REPORT,

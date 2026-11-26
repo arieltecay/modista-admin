@@ -4,7 +4,10 @@ import { formatDateTime, formatInvoiceNumber, formatMoney } from '../../utils/fo
 import type { InvoiceRow, InvoicesTableProps } from './types';
 
 const HEADERS = ['Fecha', 'Comprobante', 'Alumna', 'Curso', 'Total', 'Estado', 'Mail', 'Acciones'];
-const ACTION = 'rounded-md border px-2.5 py-1 text-xs font-medium disabled:opacity-50';
+const CELL = 'px-3 py-3';
+/** Texto libre del servidor (mail, curso, errores): corta palabras largas; el `min-w` de la celda lo mantiene legible en tablet. */
+const WRAP = '[overflow-wrap:anywhere]';
+const ACTION = 'whitespace-nowrap rounded-md border px-2.5 py-1 text-xs font-medium disabled:opacity-50';
 
 const mailCell = (row: InvoiceRow): string => {
   if (row.status !== 'authorized') return '—';
@@ -21,43 +24,47 @@ export const InvoicesTable = ({
   onRetryCreditNote,
   onResendCreditNote,
 }: InvoicesTableProps) => (
-  <div className="overflow-x-auto">
-    <table className="min-w-full divide-y divide-gray-200 text-sm">
-      <thead className="bg-gray-50">
-        <tr>
+  <div className="relative overflow-x-auto">
+    <table role="table" className="stacked-table min-w-full divide-y divide-gray-200 text-sm">
+      <thead role="rowgroup" className="bg-gray-50">
+        <tr role="row">
           {HEADERS.map((header) => (
-            <th key={header} scope="col" className="px-4 py-3 text-left font-semibold text-gray-600">
+            <th role="columnheader" key={header} scope="col" className={`${CELL} text-left font-semibold text-gray-600`}>
               {header}
             </th>
           ))}
         </tr>
       </thead>
-      <tbody className="divide-y divide-gray-100 bg-white">
+      <tbody role="rowgroup" className="divide-y divide-gray-100 bg-white">
         {rows.map((row) => (
-          <tr key={row.id}>
-            <td className="whitespace-nowrap px-4 py-3">{formatDateTime(row.createdAt)}</td>
-            <td className="whitespace-nowrap px-4 py-3">{formatInvoiceNumber(row.pointOfSale, row.number)}</td>
-            <td className="px-4 py-3">
-              <div className="font-medium text-gray-900">{row.receiver.name}</div>
-              <div className="text-gray-500">{row.receiver.email}</div>
+          <tr role="row" key={row.id}>
+            <td role="cell" data-label="Fecha" className={CELL}>{formatDateTime(row.createdAt)}</td>
+            <td role="cell" data-label="Comprobante" className={`${CELL} whitespace-nowrap`}>{formatInvoiceNumber(row.pointOfSale, row.number)}</td>
+            <td role="cell" data-label="Alumna" className={`${CELL} md:min-w-32 ${WRAP}`}>
+              <div className="min-w-0">
+                <div className="font-medium text-gray-900">{row.receiver.name}</div>
+                <div className="text-gray-500">{row.receiver.email}</div>
+              </div>
             </td>
-            <td className="px-4 py-3">{row.courseTitle ?? '—'}</td>
-            <td className="whitespace-nowrap px-4 py-3">{formatMoney(row.total)}</td>
-            <td className="px-4 py-3">
-              <InvoiceStatusBadge status={row.status} isTest={row.environment === 'homologation'} />
-              {row.status !== 'authorized' && row.lastError && <p className="mt-1 max-w-xs text-xs text-gray-500">{row.lastError}</p>}
-              {row.creditNote && (
-                <CreditNoteCell
-                  note={row.creditNote}
-                  isBusy={busyId === row.id}
-                  onResend={() => onResendCreditNote(row.id)}
-                  onRetry={() => onRetryCreditNote(row.id)}
-                />
-              )}
+            <td role="cell" data-label="Curso" className={`${CELL} md:min-w-32 ${WRAP}`}>{row.courseTitle ?? '—'}</td>
+            <td role="cell" data-label="Total" className={`${CELL} whitespace-nowrap`}>{formatMoney(row.total)}</td>
+            <td role="cell" data-label="Estado" className={`${CELL} md:min-w-40 ${WRAP}`}>
+              <div className="min-w-0">
+                <InvoiceStatusBadge status={row.status} isTest={row.environment === 'homologation'} />
+                {row.status !== 'authorized' && row.lastError && <p className="mt-1 text-xs text-gray-500">{row.lastError}</p>}
+                {row.creditNote && (
+                  <CreditNoteCell
+                    note={row.creditNote}
+                    isBusy={busyId === row.id}
+                    onResend={() => onResendCreditNote(row.id)}
+                    onRetry={() => onRetryCreditNote(row.id)}
+                  />
+                )}
+              </div>
             </td>
-            <td className="whitespace-nowrap px-4 py-3">{mailCell(row)}</td>
-            <td className="whitespace-nowrap px-4 py-3">
-              <div className="flex gap-2">
+            <td role="cell" data-label="Mail" className={`${CELL} whitespace-nowrap`}>{mailCell(row)}</td>
+            <td role="cell" data-label="Acciones" className={CELL}>
+              <div className="flex flex-wrap justify-end gap-2 md:max-w-52 md:justify-start">
                 {row.publicUrl && (
                   <a href={row.publicUrl} target="_blank" rel="noopener noreferrer" className={`${ACTION} border-indigo-200 text-indigo-700`}>
                     Ver / Imprimir

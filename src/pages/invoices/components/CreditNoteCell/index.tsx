@@ -1,7 +1,7 @@
 import { creditNoteLabel, formatInvoiceNumber } from '../../utils/format';
 import type { CreditNoteCellProps } from './types';
 
-const ACTION = 'rounded-md border px-2 py-0.5 text-xs font-medium disabled:opacity-50';
+const ACTION = 'whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium disabled:opacity-50';
 
 /** Estado de la nota de crédito de una factura y sus acciones. */
 export const CreditNoteCell = ({ note, isBusy, onResend, onRetry }: CreditNoteCellProps) => (
@@ -12,9 +12,9 @@ export const CreditNoteCell = ({ note, isBusy, onResend, onRetry }: CreditNoteCe
         NC {formatInvoiceNumber(note.pointOfSale, note.number)} · {note.emailSentAt ? 'Mail de nota enviado' : 'Mail de nota sin enviar'}
       </p>
     )}
-    {note.reason && <p className="max-w-xs whitespace-normal break-words">Motivo: {note.reason}</p>}
-    {note.status !== 'authorized' && note.lastError && <p className="max-w-xs">{note.lastError}</p>}
-    <div className="flex gap-2">
+    {note.reason && <p>Motivo: {note.reason}</p>}
+    {note.status !== 'authorized' && note.lastError && <p>{note.lastError}</p>}
+    <div className="flex flex-wrap gap-2">
       {note.publicUrl && (
         <a href={note.publicUrl} target="_blank" rel="noopener noreferrer" className={`${ACTION} border-indigo-200 text-indigo-700`}>
           Ver nota

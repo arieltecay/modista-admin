@@ -98,6 +98,12 @@ test('coupons do not move sideways', async ({ page }) => {
   await expectNoSidewaysScroll(page, 'coupons-form');
 });
 
+test('invoices do not move sideways, credited or refused', async ({ page }) => {
+  await page.goto('/admin/invoices');
+  await expect(page.getByText('Anulada')).toBeVisible();
+  await expectNoSidewaysScroll(page, 'invoices');
+});
+
 test('a coupon detail does not move sideways', async ({ page }) => {
   await page.goto('/admin/coupons/c1');
   await expect(page.getByText('Maximiliana G.')).toBeVisible();
@@ -148,7 +154,7 @@ test('a closed metric help does not reopen by focus, and the first tap always op
 
 test('each card label matches its column', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });
-  for (const [path, tables] of [['/admin/acquisition', 2], ['/admin/coupons', 1], ['/admin/coupons/c1', 1]] as const) {
+  for (const [path, tables] of [['/admin/acquisition', 2], ['/admin/coupons', 1], ['/admin/coupons/c1', 1], ['/admin/invoices', 1]] as const) {
     await page.goto(path);
     await expect(page.locator('.stacked-table')).toHaveCount(tables);
     for (const table of await page.locator('.stacked-table').all()) {

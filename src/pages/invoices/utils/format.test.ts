@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDateTime, formatInvoiceNumber, formatMoney, statusLabel } from './format';
+import { formatDateTime, formatInvoiceNumber, formatMoney, statusLabel, isPastCreditNoteTerm } from './format';
 
 describe('invoice list formatting', () => {
   it('labels every status in Spanish', () => {
@@ -21,5 +21,16 @@ describe('invoice list formatting', () => {
     // 02:30 UTC is still the evening of the 21st in Argentina.
     expect(formatDateTime('2026-11-22T02:30:00Z')).toMatch(/21\/11\/2026/);
     expect(formatDateTime(undefined)).toBe('—');
+  });
+});
+
+describe('isPastCreditNoteTerm', () => {
+  const issued = '2026-11-01T00:00:00Z';
+  const limit = new Date('2026-11-16T00:00:00Z').getTime();
+
+  it('warns only once 15 days have passed', () => {
+    expect(isPastCreditNoteTerm(issued, limit)).toBe(false);
+    expect(isPastCreditNoteTerm(issued, limit + 1)).toBe(true);
+    expect(isPastCreditNoteTerm(undefined, limit)).toBe(false);
   });
 });

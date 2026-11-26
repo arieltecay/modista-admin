@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 vi.mock('../config/apiClient', () => ({ apiClient: api }));
 
-import { listInvoices, resendInvoice, retryInvoice } from './invoiceService';
+import { issueCreditNote, listInvoices, resendCreditNote, resendInvoice, retryCreditNote, retryInvoice } from './invoiceService';
 
 describe('invoiceService', () => {
   beforeEach(() => {
@@ -28,6 +28,16 @@ describe('invoiceService', () => {
     api.get.mockResolvedValue(page);
 
     expect(await listInvoices({ page: 1, limit: 20 })).toBe(page);
+  });
+
+  it('issues, retries and resends the credit note of an invoice', async () => {
+    await issueCreditNote('abc', 'Devolución');
+    await retryCreditNote('abc');
+    await resendCreditNote('abc');
+
+    expect(api.post).toHaveBeenNthCalledWith(1, '/invoices/abc/credit-note', { reason: 'Devolución' });
+    expect(api.post).toHaveBeenNthCalledWith(2, '/invoices/abc/credit-note/retry');
+    expect(api.post).toHaveBeenNthCalledWith(3, '/invoices/abc/credit-note/resend');
   });
 
   it('retries and resends by invoice id', async () => {

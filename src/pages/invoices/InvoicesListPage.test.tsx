@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const service = vi.hoisted(() => ({ listInvoices: vi.fn(), retryInvoice: vi.fn(), resendInvoice: vi.fn() }));
+const service = vi.hoisted(() => ({ listInvoices: vi.fn(), retryInvoice: vi.fn(), resendInvoice: vi.fn(), issueCreditNote: vi.fn(), retryCreditNote: vi.fn(), resendCreditNote: vi.fn() }));
 vi.mock('@/services/invoices/invoiceService', () => service);
 const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('react-hot-toast', () => ({ default: toastMock }));
@@ -38,6 +38,9 @@ describe('InvoicesListPage', () => {
     service.listInvoices.mockReset().mockResolvedValue(page([invoice()]));
     service.retryInvoice.mockReset().mockResolvedValue({ status: 'authorized', issued: true });
     service.resendInvoice.mockReset().mockResolvedValue({ sent: true });
+    service.issueCreditNote.mockReset().mockResolvedValue({ status: 'authorized', issued: true });
+    service.retryCreditNote.mockReset().mockResolvedValue({ status: 'authorized', issued: true });
+    service.resendCreditNote.mockReset().mockResolvedValue({ sent: true });
     toastMock.success.mockReset();
     toastMock.error.mockReset();
   });
@@ -183,5 +186,103 @@ describe('InvoicesListPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Error de red');
     await userEvent.click(screen.getByRole('button', { name: /reintentar carga/i }));
     expect(await screen.findByText('BEATRIZ MENDOZA')).toBeInTheDocument();
+  });
+
+  it('issues a credit note only after confirming with a reason', async () => {
+    render(<InvoicesListPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Nota de crédito' }));
+
+    const dialog = await screen.findByRole('dialog');
+    const confirm = within(dialog).getByRole('button', { name: 'Emitir nota de crédito' });
+    expect(within(dialog).getByText(/00003-00000012/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/no devuelve el dinero/i)).toBeInTheDocument();
+    expect(confirm).toBeDisabled();
+
+    await userEvent.type(within(dialog).getByLabelText(/motivo/i), 'Devolución');
+    await userEvent.click(confirm);
+
+    await waitFor(() => expect(service.issueCreditNote).toHaveBeenCalledWith('inv1', 'Devolución'));
+    expect(service.issueCreditNote).toHaveBeenCalledTimes(1);
+    expect(toastMock.success).toHaveBeenCalledWith('Nota de crédito emitida');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('while issuing, a second click or Escape does nothing', async () => {
+    service.issueCreditNote.mockReturnValue(new Promise(() => {}));
+    render(<InvoicesListPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Nota de crédito' }));
+    const dialog = await screen.findByRole('dialog');
+    const reason = within(dialog).getByLabelText(/motivo/i);
+    await userEvent.type(reason, '  a ');
+    expect(within(dialog).getByRole('button', { name: 'Emitir nota de crédito' })).toBeDisabled();
+    await userEvent.type(reason, 'bcd');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Emitir nota de crédito' }));
+
+    expect(await within(dialog).findByRole('button', { name: 'Emitiendo…' })).toBeDisabled();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(service.issueCreditNote).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancelling issues nothing', async () => {
+    render(<InvoicesListPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Nota de crédito' }));
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancelar' }));
+
+    expect(service.issueCreditNote).not.toHaveBeenCalled();
+  });
+
+  it('reports and reloads when issuing fails: the note may exist anyway', async () => {
+    service.issueCreditNote.mockRejectedValue(new Error('Error de red'));
+    render(<InvoicesListPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Nota de crédito' }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(within(dialog).getByLabelText(/motivo/i), 'Devolución');
+    const before = service.listInvoices.mock.calls.length;
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Emitir nota de crédito' }));
+
+    await waitFor(() => expect(toastMock.error).toHaveBeenCalledWith('Error de red'));
+    await waitFor(() => expect(service.listInvoices.mock.calls.length).toBeGreaterThan(before));
+  });
+
+  it('shows a credited invoice as such, without offering another note', async () => {
+    service.listInvoices.mockResolvedValue(
+      page([invoice({ creditNote: { status: 'authorized', pointOfSale: 3, number: 1, reason: 'Devolución', publicUrl: 'https://modista-app.com/factura/b' } })]),
+    );
+    render(<InvoicesListPage />);
+
+    expect(await screen.findByText('Anulada')).toBeInTheDocument();
+    expect(screen.getByText(/mail de nota sin enviar/i)).toBeInTheDocument();
+    expect(screen.getByText('Motivo: Devolución')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver nota' })).toHaveAttribute('href', 'https://modista-app.com/factura/b');
+    expect(screen.queryByRole('button', { name: 'Nota de crédito' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Reenviar nota' }));
+    await waitFor(() => expect(service.resendCreditNote).toHaveBeenCalledWith('inv1'));
+  });
+
+  it.each([
+    ['failed', /rechaz/i],
+    ['pending', /sigue pendiente/i],
+  ] as const)('retries a %s credit note and tells what happened', async (status, message) => {
+    service.listInvoices.mockResolvedValue(page([invoice({ creditNote: { status, pointOfSale: 3, lastError: 'detalle' } })]));
+    service.retryCreditNote.mockResolvedValue({ status, issued: false });
+    render(<InvoicesListPage />);
+
+    expect(await screen.findByText('detalle')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar nota' }));
+
+    await waitFor(() => expect(service.retryCreditNote).toHaveBeenCalledWith('inv1'));
+    expect(toastMock.error).toHaveBeenCalledWith(expect.stringMatching(message));
+  });
+
+  it('warns, without blocking, when the invoice is older than 15 days', async () => {
+    service.listInvoices.mockResolvedValue(page([invoice({ issuedAt: '2020-01-01T00:00:00Z' })]));
+    render(<InvoicesListPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Nota de crédito' }));
+    const dialog = await screen.findByRole('dialog');
+
+    expect(within(dialog).getByRole('note')).toHaveTextContent(/15 días/);
+    await userEvent.type(within(dialog).getByLabelText(/motivo/i), 'Devolución');
+    expect(within(dialog).getByRole('button', { name: 'Emitir nota de crédito' })).toBeEnabled();
   });
 });

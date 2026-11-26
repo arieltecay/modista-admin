@@ -20,7 +20,7 @@ test.afterEach(() => {
 });
 
 test('tables are still tables', async ({ page }) => {
-  for (const path of ['/admin/acquisition', '/admin/coupons', '/admin/coupons/c1']) {
+  for (const path of ['/admin/acquisition', '/admin/coupons', '/admin/coupons/c1', '/admin/invoices']) {
     await page.goto(path);
     for (const width of [768, 1280]) {
       await page.setViewportSize({ width, height: 800 });
@@ -59,7 +59,7 @@ test('metric help opens by hover and by focus, inside its card, and stays closed
 });
 
 test('on a tablet only the table box scrolls, never the page', async ({ page }) => {
-  for (const path of ['/admin/acquisition', '/admin/coupons', '/admin/coupons/c1']) {
+  for (const path of ['/admin/acquisition', '/admin/coupons', '/admin/coupons/c1', '/admin/invoices']) {
     await page.goto(path);
     await expect(page.locator('.stacked-table').last()).toBeVisible();
     for (const width of [768, 1024]) {
@@ -67,5 +67,36 @@ test('on a tablet only the table box scrolls, never the page', async ({ page }) 
       const overflow = await page.locator('main.custom-scrollbar').evaluate((main) => main.scrollWidth - main.clientWidth);
       expect.soft(overflow, `${path} at ${width}px`).toBeLessThanOrEqual(0);
     }
+  }
+});
+
+test('on a 1440px screen the invoices fit without scrolling and each action reads on one line', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/admin/invoices');
+  await expect(page.getByText('Anulada')).toBeVisible();
+  const box = page.locator('table').locator('..');
+  expect(await box.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(0);
+  for (const action of await page.locator('tbody').getByRole('link').or(page.locator('tbody').getByRole('button')).all()) {
+    const label = (await action.textContent())?.trim();
+    expect.soft(await action.evaluate((element) => element.getClientRects().length === 1 && element.getBoundingClientRect().height < 32), `${label}`).toBe(true);
+  }
+});
+
+test('a dialog leaves the page visible behind it', async ({ page }) => {
+  await page.goto('/admin/invoices');
+  await page.getByRole('button', { name: 'Nota de crédito' }).click();
+  await expect(page.getByRole('heading', { name: 'Emitir nota de crédito' })).toBeVisible();
+  const backdrop = page.locator('[id^="headlessui-dialog"] .fixed.inset-0').first();
+  // Tailwind 4 dropped `bg-opacity-*`: a solid backdrop hides the page.
+  await expect.poll(() => backdrop.evaluate((element) => getComputedStyle(element).backgroundColor)).toMatch(/(\/ |, )0?\.75\)$/);
+});
+
+test('on a tablet the invoice texts keep a readable width; the table box scrolls instead', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await page.goto('/admin/invoices');
+  await expect(page.getByText('Anulada')).toBeVisible();
+  for (const label of ['Alumna', 'Curso', 'Estado']) {
+    const width = await page.locator(`td[data-label="${label}"]`).first().evaluate((cell) => cell.getBoundingClientRect().width);
+    expect.soft(width, label).toBeGreaterThanOrEqual(128);
   }
 });
